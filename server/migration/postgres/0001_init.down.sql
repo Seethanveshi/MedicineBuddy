@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS medicines;
+DROP TABLE IF EXISTS schedules;
+DROP TABLE IF EXISTS dose_logs;

@@ -1,0 +1,2 @@
+ALTER TABLE dose_logs
+DROP CONSTRAINT unique_medicine_schedule;
