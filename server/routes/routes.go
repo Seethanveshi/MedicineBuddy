@@ -28,4 +28,12 @@ func Router(r *gin.Engine, db *sql.DB) {
 	{
 		medicines.POST("", medicineHandler.CreateMedicine)
 	}
+
+	doses := r.Group("/doses")
+	{
+		doses.GET("/today", doseHandler.GetToday)
+		doses.GET("/upcoming", doseHandler.GetUpcoming)
+		doses.GET("/history", doseHandler.GetHistory)
+	}
 }
+

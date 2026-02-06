@@ -10,6 +10,7 @@ const (
 	DosePending = "pending"
 	DoseTaken   = "taken"
 	DoseMissed  = "missed"
+	DoseSkipped = "skipped"
 )
 
 type DoseLog struct {
@@ -17,5 +18,5 @@ type DoseLog struct {
 	MedicineID uuid.UUID
 	ScheduleAt time.Time
 	Status     string
-	TakenAt    time.Time
+	TakenAt    *time.Time
 }

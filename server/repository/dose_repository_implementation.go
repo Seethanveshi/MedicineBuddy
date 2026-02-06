@@ -98,3 +98,89 @@ func (r *DoseRepositoryImple) UpdateDoseStatus(ctx context.Context, doseID uuid.
 
 	return nil
 }
+
+func (r *DoseRepositoryImple) GetDosesBetween(
+	ctx context.Context,
+	from time.Time,
+	to time.Time,
+) ([]model.DoseLog, error) {
+
+	query := `
+		SELECT id, medicine_id, scheduled_at, status, taken_at
+		FROM dose_logs
+		WHERE scheduled_at >= $1 AND scheduled_at < $2
+		ORDER BY scheduled_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var doses []model.DoseLog
+
+	for rows.Next() {
+		var d model.DoseLog
+		var takenAt sql.NullTime
+
+		err := rows.Scan(
+			&d.ID,
+			&d.MedicineID,
+			&d.ScheduleAt,
+			&d.Status,
+			&takenAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if takenAt.Valid {
+			d.TakenAt = &takenAt.Time
+		} else {
+			d.TakenAt = nil
+		}
+
+		doses = append(doses, d)
+	}
+
+	return doses, nil
+}
+
+func (r *DoseRepositoryImple) GetDoseHistory(
+	ctx context.Context,
+	limit int,
+) ([]model.DoseLog, error) {
+
+	query := `
+		SELECT id, medicine_id, scheduled_at, status, taken_at
+		FROM dose_logs
+		WHERE status IN ('taken','missed','skipped')
+		ORDER BY scheduled_at DESC
+		LIMIT $1
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var doses []model.DoseLog
+
+	for rows.Next() {
+		var d model.DoseLog
+		if err := rows.Scan(
+			&d.ID,
+			&d.MedicineID,
+			&d.ScheduleAt,
+			&d.Status,
+			&d.TakenAt,
+		); err != nil {
+			return nil, err
+		}
+		doses = append(doses, d)
+	}
+
+	return doses, nil
+}

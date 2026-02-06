@@ -107,11 +107,59 @@ func (s *DoseService) MarkDoseSkipped(ctx context.Context, doseID uuid.UUID) err
 		ctx,
 		doseID,
 		model.DosePending,
-		model.DoseMissed,
+		model.DoseSkipped,
 		&now,
 	)
 }
 
 func contains(days []int, target int) bool {
 	return slices.Contains(days, target)
+}
+
+func (s *DoseService) GetTodayDoses(ctx context.Context) ([]model.DoseLog, error) {
+
+	nowLocal := time.Now().In(time.Local)
+
+	startLocal := time.Date(
+		nowLocal.Year(),
+		nowLocal.Month(),
+		nowLocal.Day(),
+		0, 0, 0, 0,
+		time.Local,
+	)
+
+	endLocal := startLocal.Add(24 * time.Hour)
+
+	return s.doseRepository.GetDosesBetween(
+		ctx,
+		startLocal.UTC(),
+		endLocal.UTC(),
+	)
+}
+
+func (s *DoseService) GetUpcomingDoses(
+	ctx context.Context,
+	days int,
+) ([]model.DoseLog, error) {
+
+	now := time.Now().UTC()
+	end := now.AddDate(0, 0, days)
+
+	return s.doseRepository.GetDosesBetween(ctx, now, end)
+}
+
+func (s *DoseService) GetDoseHistory(
+	ctx context.Context,
+	limit int,
+) ([]model.DoseLog, error) {
+
+	// query := `
+	// 	SELECT id, medicine_id, scheduled_at, status, taken_at
+	// 	FROM dose_logs
+	// 	WHERE status IN ('taken','missed','skipped')
+	// 	ORDER BY scheduled_at DESC
+	// 	LIMIT $1
+	// `
+
+	return s.doseRepository.GetDoseHistory(ctx, limit)
 }
