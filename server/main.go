@@ -8,6 +8,7 @@ import (
 	"MedicineBuddy/routes"
 	"MedicineBuddy/service"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,6 +23,13 @@ func main() {
 	doseCron.Start()
 
 	r := gin.Default()
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"http://localhost:8081"},
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
+	}))
+
 	routes.Router(r, db)
 	r.Run(":" + config.AppPort)
 }
