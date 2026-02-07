@@ -1,13 +1,15 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { addDays, startOfWeek, format } from "date-fns";
+import { addDays, startOfWeek, format, addWeeks } from "date-fns";
+import { useState } from "react";
 
 type Props = {
   selected: Date;
+  weekStart: Date;
   onSelect: (d: Date) => void;
 };
 
-export default function WeekCalendar({ selected, onSelect }: Props) {
-  const start = startOfWeek(new Date(), { weekStartsOn: 1 });
+export default function WeekCalendar({ selected,weekStart, onSelect }: Props) {
+  const start = weekStart;
 
   const days = Array.from({ length: 7 }).map((_, i) => addDays(start, i));
 

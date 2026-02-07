@@ -184,3 +184,49 @@ func (r *DoseRepositoryImple) GetDoseHistory(
 
 	return doses, nil
 }
+
+func (r *DoseRepositoryImple) GetDosesByDate(ctx context.Context, date time.Time) ([]model.DoseLog, error) {
+
+	start := date.Truncate(24 * time.Hour)
+	end := start.Add(24 * time.Hour)
+
+	query := `
+		SELECT id, medicine_id, scheduled_at, status, taken_at
+		FROM dose_logs
+		WHERE scheduled_at >= $1
+		AND scheduled_at < $2
+		ORDER BY scheduled_at ASC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, start, end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var doses []model.DoseLog
+
+	for rows.Next() {
+		var d model.DoseLog
+		var takenAt sql.NullTime
+
+		err := rows.Scan(
+			&d.ID,
+			&d.MedicineID,
+			&d.ScheduleAt,
+			&d.Status,
+			&takenAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if takenAt.Valid {
+			d.TakenAt = &takenAt.Time
+		}
+
+		doses = append(doses, d)
+	}
+
+	return doses, nil
+}

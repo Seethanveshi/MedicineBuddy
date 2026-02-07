@@ -6,6 +6,7 @@ import (
 	"MedicineBuddy/service"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -66,6 +67,35 @@ func (h *DoseHandler) GetToday(c *gin.Context) {
 
 	c.JSON(200, responses)
 }
+
+func (h *DoseHandler) GetDosesByDate(c *gin.Context) {
+	dateStr := c.Query("date")
+	if dateStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "date is required"})
+		return
+	}
+
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid date format"})
+		return
+	}
+
+	doses, err := h.doseService.GetDosesByDate(c.Request.Context(), date)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// map to DTO like you already do
+	responses := make([]dto.DoseLogResponse, 0, len(doses))
+	for _, d := range doses {
+		responses = append(responses, mapper.ToDoseResponse(d))
+	}
+
+	c.JSON(http.StatusOK, responses)
+}
+
 
 func (h *DoseHandler) GetUpcoming(c *gin.Context) {
 	days := 7

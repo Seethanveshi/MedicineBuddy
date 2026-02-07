@@ -137,6 +137,14 @@ func (s *DoseService) GetTodayDoses(ctx context.Context) ([]model.DoseLog, error
 	)
 }
 
+func (s *DoseService) GetDosesByDate(
+	ctx context.Context,
+	date time.Time,
+) ([]model.DoseLog, error) {
+	return s.doseRepository.GetDosesByDate(ctx, date)
+}
+
+
 func (s *DoseService) GetUpcomingDoses(
 	ctx context.Context,
 	days int,

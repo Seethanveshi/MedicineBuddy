@@ -8,13 +8,24 @@ type Props = {
 };
 
 export default function DoseCard({ dose, onTake, onSkip }: Props) {
+  const style = STATUS_STYLES[dose.status];
   return (
-    <View style={styles.card}>
+    <View style={[
+        styles.card,
+        {
+          borderLeftColor: style.border,
+          backgroundColor: style.bg,
+        },
+      ]}>
+        <Text>Paracetamol</Text>
+        <Text>1 tablet</Text>
       <Text style={styles.time}>
          {formatTimeThenDate(dose.scheduled_at)}
       </Text>
 
-      <Text style={styles.status}>{dose.status}</Text>
+      <Text style={{ color: style.text, marginTop: 4 }}>
+        {dose.status.toUpperCase()}
+      </Text>
 
       {dose.status === "pending" && (
         <View style={styles.actions}>
@@ -37,9 +48,8 @@ const styles = StyleSheet.create({
   card: {
     padding: 16,
     marginBottom: 12,
-    borderRadius: 10,
-    backgroundColor: "#fff",
-    elevation: 2,
+    borderRadius: 12,
+    borderLeftWidth: 5,
   },
   time: {
     fontSize: 20,
@@ -55,3 +65,28 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 });
+
+const STATUS_STYLES = {
+  pending: {
+    border: "#f9a825",
+    bg: "#fff8e1",
+    text: "#f57f17",
+  },
+  taken: {
+    border: "#2e7d32",
+    bg: "#e8f5e9",
+    text: "#1b5e20",
+  },
+  missed: {
+    border: "#c62828",
+    bg: "#ffebee",
+    text: "#b71c1c",
+  },
+  skipped: {
+    border: "#9e9e9e",
+    bg: "#f5f5f5",
+    text: "#616161",
+  },
+};
+
+
