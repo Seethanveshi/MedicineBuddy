@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { View, FlatList, Text } from "react-native";
 import { Dose } from "../types/dose";
 import DoseCard from "../components/DoseCard";
-import axios from "axios";
 import { API } from "@/api/doses";
 
 export default function HistoryScreen() {

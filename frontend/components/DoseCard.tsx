@@ -11,7 +11,7 @@ export default function DoseCard({ dose, onTake, onSkip }: Props) {
   return (
     <View style={styles.card}>
       <Text style={styles.time}>
-        {formatTimeThenDate(dose.scheduled_at)}
+         {formatTimeThenDate(dose.scheduled_at)}
       </Text>
 
       <Text style={styles.status}>{dose.status}</Text>

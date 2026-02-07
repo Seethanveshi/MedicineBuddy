@@ -153,13 +153,5 @@ func (s *DoseService) GetDoseHistory(
 	limit int,
 ) ([]model.DoseLog, error) {
 
-	// query := `
-	// 	SELECT id, medicine_id, scheduled_at, status, taken_at
-	// 	FROM dose_logs
-	// 	WHERE status IN ('taken','missed','skipped')
-	// 	ORDER BY scheduled_at DESC
-	// 	LIMIT $1
-	// `
-
 	return s.doseRepository.GetDoseHistory(ctx, limit)
 }

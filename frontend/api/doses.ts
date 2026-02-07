@@ -2,7 +2,7 @@ import { Dose } from "@/types/dose";
 import axios from "axios";
 
 export const API = axios.create({
-    baseURL: "http://localhost:8080",
+    baseURL: "http://10.81.193.101:8080",
 });
 
 export const getTodayDoses = async (): Promise<Dose[]> => {
@@ -17,3 +17,8 @@ export const takeDose = async (id: string) => {
 export const skipDose = async (id: string) => {
     await API.post(`/doses/${id}/skip`);
 }
+
+export const getUpcomingDoses = async (days = 7): Promise<Dose[]> => {
+  const res = await API.get<Dose[]>(`/doses/upcoming?days=${days}`);
+  return res.data;
+};
