@@ -1,24 +1,27 @@
 import { useEffect, useState } from "react";
-import { View, FlatList, Text } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { takeDose, skipDose, getUpcomingDoses, getDosesByDate } from "../api/doses";
 import DoseCard from "../components/DoseCard";
 import { Dose } from "../types/dose";
-import { configureNotifications, scheduleDoseNotification, cancelDoseNotification, cancelAllDoseNotifications, scheduleUpcomingDoseNotifications,  } from "../utils/notifications";
-import { cacheGet, cacheSet } from "@/utils/cache";
+import { configureNotifications, cancelDoseNotification, cancelAllDoseNotifications, scheduleUpcomingDoseNotifications,  } from "../utils/notifications";
+import { cacheSet } from "@/utils/cache";
 import WeekCalendar from "@/components/WeekCalender";
 import { format } from "date-fns";
 import { ActivityIndicator } from "react-native";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { startOfWeek, addWeeks } from "date-fns";
+import { TouchableOpacity } from "react-native";
+import {useNavigation } from "@react-navigation/native";
 
 export default function TodayScreen() {
   const [loading, setLoading] = useState(false);
-
   const [doses, setDoses] = useState<Dose[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekStart, setWeekStart] = useState( startOfWeek(new Date(), { weekStartsOn: 1 }));
   const TODAY_CACHE_KEY = "today_doses";
   const UPCOMING_CACHE_KEY = "upcoming_doses";
+
+ const navigation = useNavigation<any>();
+
 
   useEffect(() => {
     load(selectedDate);
@@ -37,55 +40,16 @@ export default function TodayScreen() {
   };
 
   useEffect(() => {
-    const init = async () => {
-      // 1️⃣ Load cached today doses
-      const cached = await cacheGet<Dose[]>(TODAY_CACHE_KEY);
-      if (cached) setDoses(cached);
-
-      // 2️⃣ Fetch fresh today doses
-      try {
-        const upcomingData = await getUpcomingDoses();
-        await cacheSet(UPCOMING_CACHE_KEY, upcomingData);
-
-        // 3️⃣ Schedule notifications for today's pending doses
-        // await Promise.all(
-        //   todayData.filter(d => d.status === "pending").map(scheduleDoseNotification)
-        // );
-
-        await cancelAllDoseNotifications();
-        await scheduleUpcomingDoseNotifications(upcomingData);
-      } catch (e) {
-        console.warn("Failed to fetch today doses, using cache", e);
-      }
-
-      // 4️⃣ Ensure upcoming notifications are scheduled
-      try {
-        const allowed = await configureNotifications();
-        if (!allowed) return;
-
-        const upcomingData = await getUpcomingDoses();
-        await cacheSet(UPCOMING_CACHE_KEY, upcomingData);
-        await scheduleUpcomingDoseNotifications(upcomingData);
-      } catch (e) {
-        console.warn("Failed to schedule upcoming notifications", e);
-      }
-    };
-
-    init();
-  }, []);
-
-  useEffect(() => {
-    const initNotifications = async () => {
+    (async () => {
       const allowed = await configureNotifications();
       if (!allowed) return;
 
-      const upcoming = await getUpcomingDoses();
-
       await cancelAllDoseNotifications();
-      await scheduleUpcomingDoseNotifications(upcoming);
-    };
 
-    initNotifications();
+      const upcoming = await getUpcomingDoses();
+      await cacheSet(UPCOMING_CACHE_KEY, upcoming);
+      await scheduleUpcomingDoseNotifications(upcoming);
+    })();
   }, []);
 
 
@@ -102,25 +66,14 @@ export default function TodayScreen() {
         map[time].push(dose);
     });
 
-    return Object.entries(map).sort(([a], [b]) => {
-      return a.localeCompare(b);
-    });
+    return Object.entries(map).sort(
+      ([a], [b]) =>
+        Date.parse(`1970-01-01 ${a}`) - Date.parse(`1970-01-01 ${b}`)
+    );
+
   };
 
   const groups = groupByTime(doses);
-
-  // const swipeGesture = Gesture.Pan()
-  // .onEnd((event) => {
-  //   if (event.translationX > 50) {
-  //     // swipe right → previous day
-  //     setSelectedDate((prev) => addDays(prev, -1));
-  //   }
-
-  //   if (event.translationX < -50) {
-  //     // swipe left → next day
-  //     setSelectedDate((prev) => addDays(prev, 1));
-  //   }
-  // });
 
   if (loading) {
     return (
@@ -209,7 +162,8 @@ export default function TodayScreen() {
   }
 
   return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}> 
+      <ScrollView >
         <View style={{ padding: 16 }}>
           <View style={{
               flexDirection: "row",
@@ -220,7 +174,7 @@ export default function TodayScreen() {
               <Text onPress={() => {
                 const prev = addWeeks(weekStart, -1);
                 setWeekStart(prev);
-                setSelectedDate(prev);   // 👈 IMPORTANT
+                setSelectedDate(prev); 
               }}>
                 ◀
               </Text>
@@ -232,7 +186,7 @@ export default function TodayScreen() {
               <Text onPress={() => {
                 const next = addWeeks(weekStart, 1);
                 setWeekStart(next);
-                setSelectedDate(next);   // 👈 IMPORTANT
+                setSelectedDate(next); 
               }}>
                 ▶
               </Text>
@@ -242,7 +196,6 @@ export default function TodayScreen() {
               weekStart={weekStart}
               onSelect={setSelectedDate}
             />
-
           <Text style={{ fontSize: 18, marginBottom: 12 }}>
             {format(selectedDate, "MMM d")}
           </Text>
@@ -272,7 +225,26 @@ export default function TodayScreen() {
             </View>
           ))}
         </View>
+        </ScrollView>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("AddMedicine")}
+          style={{
+            position: "absolute",
+            bottom: 20,
+            right: 20,
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: "#1976d2",
+            justifyContent: "center",
+            alignItems: "center",
+            elevation: 5,
+          }}
+        >
+          <Text style={{ color: "white", fontSize: 28 }}>+</Text>
+        </TouchableOpacity>
       </View>
   );
 }
+
 

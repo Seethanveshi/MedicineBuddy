@@ -23,9 +23,8 @@ func (d *DoseCron) Start() {
 		ctx := context.Background()
 
 		if err := d.doseService.MarkMissedDose(ctx); err != nil {
-			log.Println("❌ failed to mark missed doses:", err)
+			log.Println("failed to mark missed doses:", err)
 		}
 	})
-
 	c.Start()
 }

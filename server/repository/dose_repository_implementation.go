@@ -55,13 +55,13 @@ func (r *DoseRepositoryImple) MarkMissedDose(ctx context.Context, now time.Time)
 		SET status = $1
 		WHERE status = $2 AND scheduled_at < $3
 	`
-
+    delay := 10 * time.Minute
 	_, err := r.db.ExecContext(
 		ctx,
 		query,
 		model.DoseMissed,
 		model.DosePending,
-		now,
+		now.Add(-delay),
 	)
 
 	return err
