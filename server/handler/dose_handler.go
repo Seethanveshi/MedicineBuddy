@@ -2,7 +2,6 @@ package handler
 
 import (
 	"MedicineBuddy/dto"
-	"MedicineBuddy/mapper"
 	"MedicineBuddy/service"
 	"net/http"
 	"strconv"
@@ -56,16 +55,15 @@ func (h *DoseHandler) SkipDose(c *gin.Context) {
 func (h *DoseHandler) GetToday(c *gin.Context) {
 	doses, err := h.doseService.GetTodayDoses(c.Request.Context())
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	responses := make([]dto.DoseLogResponse, 0, len(doses))
-	for _, d := range doses {
-		responses = append(responses, mapper.ToDoseResponse(d))
+	if doses == nil {
+		doses = []dto.DoseLogResponse{}
 	}
 
-	c.JSON(200, responses)
+	c.JSON(http.StatusOK, doses)
 }
 
 func (h *DoseHandler) GetDosesByDate(c *gin.Context) {
@@ -87,15 +85,12 @@ func (h *DoseHandler) GetDosesByDate(c *gin.Context) {
 		return
 	}
 
-	// map to DTO like you already do
-	responses := make([]dto.DoseLogResponse, 0, len(doses))
-	for _, d := range doses {
-		responses = append(responses, mapper.ToDoseResponse(d))
+	if doses == nil {
+		doses = []dto.DoseLogResponse{}
 	}
 
-	c.JSON(http.StatusOK, responses)
+	c.JSON(http.StatusOK, doses)
 }
-
 
 func (h *DoseHandler) GetUpcoming(c *gin.Context) {
 	days := 7
@@ -107,15 +102,15 @@ func (h *DoseHandler) GetUpcoming(c *gin.Context) {
 
 	doses, err := h.doseService.GetUpcomingDoses(c.Request.Context(), days)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	responses := make([]dto.DoseLogResponse, 0, len(doses))
-	for _, d := range doses {
-		responses = append(responses, mapper.ToDoseResponse(d))
+
+	if doses == nil {
+		doses = []dto.DoseLogResponse{}
 	}
 
-	c.JSON(200, responses)
+	c.JSON(http.StatusOK, doses)
 }
 
 func (h *DoseHandler) GetHistory(c *gin.Context) {
@@ -128,13 +123,13 @@ func (h *DoseHandler) GetHistory(c *gin.Context) {
 
 	doses, err := h.doseService.GetDoseHistory(c.Request.Context(), limit)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	responses := make([]dto.DoseLogResponse, 0, len(doses))
-	for _, d := range doses {
-		responses = append(responses, mapper.ToDoseResponse(d))
+
+	if doses == nil {
+		doses = []dto.DoseLogResponse{}
 	}
 
-	c.JSON(200, responses)
+	c.JSON(http.StatusOK, doses)
 }

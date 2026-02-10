@@ -19,7 +19,7 @@ func NewDoseCron(doseService *service.DoseService) *DoseCron {
 func (d *DoseCron) Start() {
 	c := cron.New(cron.WithSeconds())
 
-	c.AddFunc("* */5 * * * *", func() {
+	c.AddFunc("0 */5 * * * *", func() {
 		ctx := context.Background()
 
 		if err := d.doseService.MarkMissedDose(ctx); err != nil {

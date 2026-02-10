@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"MedicineBuddy/dto"
 	"MedicineBuddy/model"
 	"context"
 	"database/sql"
@@ -55,7 +56,7 @@ func (r *DoseRepositoryImple) MarkMissedDose(ctx context.Context, now time.Time)
 		SET status = $1
 		WHERE status = $2 AND scheduled_at < $3
 	`
-    delay := 10 * time.Minute
+	delay := 10 * time.Minute
 	_, err := r.db.ExecContext(
 		ctx,
 		query,
@@ -103,13 +104,14 @@ func (r *DoseRepositoryImple) GetDosesBetween(
 	ctx context.Context,
 	from time.Time,
 	to time.Time,
-) ([]model.DoseLog, error) {
+) ([]dto.DoseLogResponse, error) {
 
 	query := `
-		SELECT id, medicine_id, scheduled_at, status, taken_at
-		FROM dose_logs
-		WHERE scheduled_at >= $1 AND scheduled_at < $2
-		ORDER BY scheduled_at ASC
+		SELECT dl.id, m.name, m.dosage, dl.medicine_id, dl.scheduled_at, dl.status, dl.taken_at
+		FROM dose_logs dl
+		LEFT JOIN medicines m ON dl.medicine_id = m.id
+		WHERE dl.scheduled_at >= $1 AND dl.scheduled_at < $2
+		ORDER BY dl.scheduled_at ASC
 	`
 
 	rows, err := r.db.QueryContext(ctx, query, from, to)
@@ -118,27 +120,22 @@ func (r *DoseRepositoryImple) GetDosesBetween(
 	}
 	defer rows.Close()
 
-	var doses []model.DoseLog
+	var doses []dto.DoseLogResponse
 
 	for rows.Next() {
-		var d model.DoseLog
-		var takenAt sql.NullTime
-
+		var d dto.DoseLogResponse
 		err := rows.Scan(
 			&d.ID,
+			&d.Name,
+			&d.Dosage,
 			&d.MedicineID,
-			&d.ScheduleAt,
+			&d.ScheduledAt,
 			&d.Status,
-			&takenAt,
+			&d.TakenAt,
 		)
+
 		if err != nil {
 			return nil, err
-		}
-
-		if takenAt.Valid {
-			d.TakenAt = &takenAt.Time
-		} else {
-			d.TakenAt = nil
 		}
 
 		doses = append(doses, d)
@@ -150,30 +147,31 @@ func (r *DoseRepositoryImple) GetDosesBetween(
 func (r *DoseRepositoryImple) GetDoseHistory(
 	ctx context.Context,
 	limit int,
-) ([]model.DoseLog, error) {
+) ([]dto.DoseLogResponse, error) {
 
 	query := `
-		SELECT id, medicine_id, scheduled_at, status, taken_at
-		FROM dose_logs
-		WHERE status IN ('taken','missed','skipped')
-		ORDER BY scheduled_at DESC
-		LIMIT $1
+		SELECT dl.id, m.name, m.dosage, dl.medicine_id, dl.scheduled_at, dl.status, dl.taken_at
+		FROM dose_logs dl
+		LEFT JOIN medicines m ON m.id = dl.medicine_id
+		WHERE dl.status IN ('taken','missed','skipped')
+		ORDER BY dl.scheduled_at DESC
 	`
-
-	rows, err := r.db.QueryContext(ctx, query, limit)
+	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var doses []model.DoseLog
+	var doses []dto.DoseLogResponse
 
 	for rows.Next() {
-		var d model.DoseLog
+		var d dto.DoseLogResponse
 		if err := rows.Scan(
 			&d.ID,
+			&d.Name,
+			&d.Dosage,
 			&d.MedicineID,
-			&d.ScheduleAt,
+			&d.ScheduledAt,
 			&d.Status,
 			&d.TakenAt,
 		); err != nil {
@@ -185,17 +183,18 @@ func (r *DoseRepositoryImple) GetDoseHistory(
 	return doses, nil
 }
 
-func (r *DoseRepositoryImple) GetDosesByDate(ctx context.Context, date time.Time) ([]model.DoseLog, error) {
+func (r *DoseRepositoryImple) GetDosesByDate(ctx context.Context, date time.Time) ([]dto.DoseLogResponse, error) {
 
 	start := date.Truncate(24 * time.Hour)
 	end := start.Add(24 * time.Hour)
 
 	query := `
-		SELECT id, medicine_id, scheduled_at, status, taken_at
-		FROM dose_logs
-		WHERE scheduled_at >= $1
-		AND scheduled_at < $2
-		ORDER BY scheduled_at ASC
+		SELECT dl.id, m.name, m.dosage,dl.medicine_id, dl.scheduled_at, dl.status, dl.taken_at
+		FROM dose_logs dl
+		LEFT JOIN medicines m ON m.id = dl.medicine_id 
+		WHERE dl.scheduled_at >= $1
+		AND dl.scheduled_at < $2
+		ORDER BY dl.scheduled_at ASC
 	`
 
 	rows, err := r.db.QueryContext(ctx, query, start, end)
@@ -204,25 +203,22 @@ func (r *DoseRepositoryImple) GetDosesByDate(ctx context.Context, date time.Time
 	}
 	defer rows.Close()
 
-	var doses []model.DoseLog
+	var doses []dto.DoseLogResponse
 
 	for rows.Next() {
-		var d model.DoseLog
-		var takenAt sql.NullTime
+		var d dto.DoseLogResponse
 
 		err := rows.Scan(
 			&d.ID,
+			&d.Name,
+			&d.Dosage,
 			&d.MedicineID,
-			&d.ScheduleAt,
+			&d.ScheduledAt,
 			&d.Status,
-			&takenAt,
+			&d.TakenAt,
 		)
 		if err != nil {
 			return nil, err
-		}
-
-		if takenAt.Valid {
-			d.TakenAt = &takenAt.Time
 		}
 
 		doses = append(doses, d)

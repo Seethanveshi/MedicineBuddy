@@ -1,16 +1,13 @@
-import { useEffect, useState } from "react";
-import { View, Text, ScrollView } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import { takeDose, skipDose, getUpcomingDoses, getDosesByDate } from "../api/doses";
 import DoseCard from "../components/DoseCard";
 import { Dose } from "../types/dose";
 import { configureNotifications, cancelDoseNotification, cancelAllDoseNotifications, scheduleUpcomingDoseNotifications,  } from "../utils/notifications";
 import { cacheSet } from "@/utils/cache";
 import WeekCalendar from "@/components/WeekCalender";
-import { format } from "date-fns";
-import { ActivityIndicator } from "react-native";
-import { startOfWeek, addWeeks } from "date-fns";
-import { TouchableOpacity } from "react-native";
-import {useNavigation } from "@react-navigation/native";
+import { format, startOfWeek, addWeeks } from "date-fns";
+import {useFocusEffect, useNavigation } from "@react-navigation/native";
 
 export default function TodayScreen() {
   const [loading, setLoading] = useState(false);
@@ -39,18 +36,21 @@ export default function TodayScreen() {
     }
   };
 
-  useEffect(() => {
-    (async () => {
-      const allowed = await configureNotifications();
-      if (!allowed) return;
+  useFocusEffect(
+    useCallback(() => {
+      load(selectedDate); 
+      (async () => {
+        const allowed = await configureNotifications();
+        if (!allowed) return;
 
-      await cancelAllDoseNotifications();
+        await cancelAllDoseNotifications();
+        const upcoming = await getUpcomingDoses();
+        await cacheSet(UPCOMING_CACHE_KEY, upcoming);
+        await scheduleUpcomingDoseNotifications(upcoming);
+      })();
+    }, [selectedDate])
+  );
 
-      const upcoming = await getUpcomingDoses();
-      await cacheSet(UPCOMING_CACHE_KEY, upcoming);
-      await scheduleUpcomingDoseNotifications(upcoming);
-    })();
-  }, []);
 
 
   const groupByTime = (doses: Dose[]) => {
@@ -63,7 +63,7 @@ export default function TodayScreen() {
       });
 
       if (!map[time]) map[time] = [];
-        map[time].push(dose);
+      map[time].push(dose);
     });
 
     return Object.entries(map).sort(
@@ -197,7 +197,7 @@ export default function TodayScreen() {
               onSelect={setSelectedDate}
             />
           <Text style={{ fontSize: 18, marginBottom: 12 }}>
-            {format(selectedDate, "MMM d")}
+            {format(selectedDate, "MMM dd")}
           </Text>
 
           {groups.map(([time, doses]) => (

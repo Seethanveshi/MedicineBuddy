@@ -51,6 +51,6 @@ export const createMedicine = async (
     const res = await API.post("/medicines", data);
     return res.data;
   }  catch (error) {
-    console.error("error while sending request");
+    console.error(error);
   }
 };

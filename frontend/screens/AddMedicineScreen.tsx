@@ -30,8 +30,6 @@ export default function AddMedicineScreen() {
 
 
   return (
-
-
     <ScrollView contentContainerStyle={styles.container}>
         <View>
             <Text style={styles.title}>Add Medicine</Text>

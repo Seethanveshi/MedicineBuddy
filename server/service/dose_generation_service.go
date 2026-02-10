@@ -1,6 +1,7 @@
 package service
 
 import (
+	"MedicineBuddy/dto"
 	"MedicineBuddy/model"
 	"MedicineBuddy/repository"
 	"context"
@@ -116,7 +117,7 @@ func contains(days []int, target int) bool {
 	return slices.Contains(days, target)
 }
 
-func (s *DoseService) GetTodayDoses(ctx context.Context) ([]model.DoseLog, error) {
+func (s *DoseService) GetTodayDoses(ctx context.Context) ([]dto.DoseLogResponse, error) {
 
 	nowLocal := time.Now().In(time.Local)
 
@@ -140,15 +141,14 @@ func (s *DoseService) GetTodayDoses(ctx context.Context) ([]model.DoseLog, error
 func (s *DoseService) GetDosesByDate(
 	ctx context.Context,
 	date time.Time,
-) ([]model.DoseLog, error) {
+) ([]dto.DoseLogResponse, error) {
 	return s.doseRepository.GetDosesByDate(ctx, date)
 }
-
 
 func (s *DoseService) GetUpcomingDoses(
 	ctx context.Context,
 	days int,
-) ([]model.DoseLog, error) {
+) ([]dto.DoseLogResponse, error) {
 
 	now := time.Now().UTC()
 	end := now.AddDate(0, 0, days)
@@ -159,7 +159,7 @@ func (s *DoseService) GetUpcomingDoses(
 func (s *DoseService) GetDoseHistory(
 	ctx context.Context,
 	limit int,
-) ([]model.DoseLog, error) {
+) ([]dto.DoseLogResponse, error) {
 
 	return s.doseRepository.GetDoseHistory(ctx, limit)
 }

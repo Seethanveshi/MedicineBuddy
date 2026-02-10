@@ -11,7 +11,7 @@ export const configureNotifications = async () => {
     finalStatus = req.status;
   }
 
-  if (finalStatus !== "granted") {
+  if (!["granted", "provisional"].includes(finalStatus)) {
     console.warn("Notification permission not granted");
     return false;
   }
@@ -50,7 +50,8 @@ export const scheduleDoseNotification = async (dose: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: triggerDate,
     },
-  });
+    channelId: Platform.OS === "android" ? "medicine" : undefined,  
+  } as any);
 };
 
 export const cancelDoseNotification = async (doseId: string) => {
@@ -59,21 +60,16 @@ export const cancelDoseNotification = async (doseId: string) => {
 
 
 export const cancelAllDoseNotifications = async () => {
-  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  for (const n of scheduled) {
-    if (n.identifier) {
-      await Notifications.cancelScheduledNotificationAsync(n.identifier);
-    }
-  }
+  await Notifications.cancelAllScheduledNotificationsAsync();
 };
 
 export const scheduleUpcomingDoseNotifications = async (doses: Dose[]) => {
-  for (const dose of doses) {
-    if (dose.status !== "pending") continue;
-
+  await Promise.all(
+  doses.map(async (dose) => {
+    if (dose.status !== "pending") return;
     const triggerDate = new Date(dose.scheduled_at);
-    if (triggerDate.getTime() <= Date.now()) continue;
-
+    if (triggerDate.getTime() <= Date.now()) return;
+    await Notifications.cancelScheduledNotificationAsync(dose.id);
     await Notifications.scheduleNotificationAsync({
       identifier: dose.id,
       content: {
@@ -84,8 +80,10 @@ export const scheduleUpcomingDoseNotifications = async (doses: Dose[]) => {
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date: triggerDate,
-    },
-    });
-  }
+      },
+      channelId: Platform.OS === "android" ? "medicine" : undefined,
+    } as any);
+  })
+);
 };
 

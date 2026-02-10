@@ -17,10 +17,11 @@ export default function DoseCard({ dose, onTake, onSkip }: Props) {
           backgroundColor: style.bg,
         },
       ]}>
-        <Text>Paracetamol</Text>
-        <Text>1 tablet</Text>
-      <Text style={styles.time}>
-         {formatTimeThenDate(dose.scheduled_at)}
+      <Text style={styles.name}>
+         {dose.name}
+      </Text>
+      <Text style={styles.dosage}>
+         {dose.dosage}
       </Text>
 
       <Text style={{ color: style.text, marginTop: 4 }}>
@@ -37,12 +38,12 @@ export default function DoseCard({ dose, onTake, onSkip }: Props) {
   );
 }
 
-function formatTimeThenDate(datetime: string) {
-  const date = new Date(datetime);
-  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const day = date.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
-  return `${time} : ${day}`;
-}
+// function formatTimeThenDate(datetime: string) {
+//   const date = new Date(datetime);
+//   const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+//   const day = date.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
+//   return `${time} : ${day}`;
+// }
 
 const styles = StyleSheet.create({
   card: {
@@ -50,6 +51,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 12,
     borderLeftWidth: 5,
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#333",
+  },
+  dosage: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#555",
+    marginTop: 2,
   },
   time: {
     fontSize: 20,
