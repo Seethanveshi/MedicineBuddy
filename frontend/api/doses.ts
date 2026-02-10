@@ -47,7 +47,6 @@ export const createMedicine = async (
   data: CreateMedicineRequest
 ) => {
   try {
-    console.log(data);
     const res = await API.post("/medicines", data);
     return res.data;
   }  catch (error) {

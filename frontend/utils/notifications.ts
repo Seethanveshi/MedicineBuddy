@@ -32,18 +32,19 @@ export const configureNotifications = async () => {
 
 export const scheduleDoseNotification = async (dose: {
   id: string;
+  name: string;
+  dosage: string;
   scheduled_at: string;
 }) => {
   const triggerDate = new Date(dose.scheduled_at);
 
-  // Ignore past dates
   if (triggerDate.getTime() <= Date.now()) return;
 
   await Notifications.scheduleNotificationAsync({
     identifier: dose.id,
     content: {
       title: "Medicine Reminder 💊",
-      body: "Time to take your medicine",
+      body: `Time to take ${dose.name} - ${dose.dosage} `,
       sound: "default",
     },
     trigger: {
@@ -74,7 +75,7 @@ export const scheduleUpcomingDoseNotifications = async (doses: Dose[]) => {
       identifier: dose.id,
       content: {
         title: "Medicine Reminder 💊",
-        body: "Time to take your medicine",
+        body: `Time to take ${dose.name} - ${dose.dosage}`,
         sound: "default",
       },
       trigger: {
