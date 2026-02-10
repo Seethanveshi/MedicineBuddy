@@ -8,6 +8,8 @@ import { cacheSet } from "@/utils/cache";
 import WeekCalendar from "@/components/WeekCalender";
 import { format, startOfWeek, addWeeks } from "date-fns";
 import {useFocusEffect, useNavigation } from "@react-navigation/native";
+import CalendarHeader from "@/components/CalendarHeader";
+import { groupByTime } from "@/utils/groupBy";
 
 export default function TodayScreen() {
   const [loading, setLoading] = useState(false);
@@ -51,59 +53,17 @@ export default function TodayScreen() {
     }, [selectedDate])
   );
 
-
-
-  const groupByTime = (doses: Dose[]) => {
-    const map: Record<string, Dose[]> = {};
-
-    doses.forEach((dose) => {
-      const time = new Date(dose.scheduled_at).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      if (!map[time]) map[time] = [];
-      map[time].push(dose);
-    });
-
-    return Object.entries(map).sort(
-      ([a], [b]) =>
-        Date.parse(`1970-01-01 ${a}`) - Date.parse(`1970-01-01 ${b}`)
-    );
-
-  };
-
   const groups = groupByTime(doses);
 
   if (loading) {
     return (
       <View style={{ padding: 16 }}>
-        <View style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 10,
-            }}>
-          <Text onPress={() => {
-            const prev = addWeeks(weekStart, -1);
-            setWeekStart(prev);
-            setSelectedDate(prev);  
-          }}>
-            ◀
-          </Text>
-
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>
-            {format(selectedDate, "MMM yyyy")}
-          </Text>
-
-          <Text onPress={() => {
-            const next = addWeeks(weekStart, 1);
-            setWeekStart(next);
-            setSelectedDate(next);   
-          }}>
-            ▶
-          </Text>
-        </View>
+        <CalendarHeader
+          weekStart={weekStart}
+          selectedDate={selectedDate}
+          setWeekStart={setWeekStart}
+          setSelectedDate={setSelectedDate}
+        />
         <WeekCalendar
               selected={selectedDate}
               weekStart={weekStart}
@@ -117,37 +77,17 @@ export default function TodayScreen() {
   if (!loading && doses.length === 0) {
     return (
       <View style={{ padding: 16 }}>
-        <View style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 10,
-            }}>
-          <Text onPress={() => {
-            const prev = addWeeks(weekStart, -1);
-            setWeekStart(prev);
-            setSelectedDate(prev);
-          }}>
-            ◀
-          </Text>
-
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>
-            {format(selectedDate, "MMM yyyy")}
-          </Text>
-
-          <Text onPress={() => {
-            const next = addWeeks(weekStart, 1);
-            setWeekStart(next);
-            setSelectedDate(next); 
-          }}>
-            ▶
-          </Text>
-        </View>
+        <CalendarHeader
+          weekStart={weekStart}
+          selectedDate={selectedDate}
+          setWeekStart={setWeekStart}
+          setSelectedDate={setSelectedDate}
+        />
         <WeekCalendar
               selected={selectedDate}
               weekStart={weekStart}
               onSelect={setSelectedDate}
-            />
+        />
 
         <Text style={{
           textAlign: "center",
@@ -165,32 +105,12 @@ export default function TodayScreen() {
       <View style={{ flex: 1 }}> 
       <ScrollView >
         <View style={{ padding: 16 }}>
-          <View style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 10,
-            }}>
-              <Text onPress={() => {
-                const prev = addWeeks(weekStart, -1);
-                setWeekStart(prev);
-                setSelectedDate(prev); 
-              }}>
-                ◀
-              </Text>
-
-              <Text style={{ fontSize: 16, fontWeight: "600" }}>
-                {format(selectedDate, "MMM yyyy")}
-              </Text>
-
-              <Text onPress={() => {
-                const next = addWeeks(weekStart, 1);
-                setWeekStart(next);
-                setSelectedDate(next); 
-              }}>
-                ▶
-              </Text>
-            </View>
+          <CalendarHeader
+            weekStart={weekStart}
+            selectedDate={selectedDate}
+            setWeekStart={setWeekStart}
+            setSelectedDate={setSelectedDate}
+          />
           <WeekCalendar
               selected={selectedDate}
               weekStart={weekStart}
@@ -246,5 +166,3 @@ export default function TodayScreen() {
       </View>
   );
 }
-
-

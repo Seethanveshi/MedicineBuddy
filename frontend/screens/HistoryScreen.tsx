@@ -3,6 +3,7 @@ import { View, Text, ScrollView } from "react-native";
 import { Dose } from "../types/dose";
 import DoseCard from "../components/DoseCard";
 import { API } from "@/api/doses";
+import { format } from "date-fns";
 
 export default function HistoryScreen() {
   const [doses, setDoses] = useState<Dose[]>([]);
@@ -20,85 +21,80 @@ export default function HistoryScreen() {
     fetchHistoryDoses();
   }, []);
 
-  // Group doses by date -> time
-  const groupByDateAndTime = (doses: Dose[]): GroupedDoses => {
-    const map: GroupedDoses = {};
+  const groupByDate = (doses: Dose[]) => {
+    const map: Record<string, Dose[]> = {};
 
     doses.forEach((dose) => {
-      const sourceDate = dose.taken_at ? new Date(dose.taken_at) : new Date(dose.scheduled_at);
-      if (isNaN(sourceDate.getTime())) return;
+      const date = new Date(dose.scheduled_at).toISOString().split("T")[0];
 
-      const dateKey = sourceDate.toISOString().slice(0, 10); // YYYY-MM-DD
-      const timeKey = sourceDate.toISOString().slice(11, 16); // HH:mm
-
-      const dateLabel = sourceDate.toLocaleDateString([], {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-
-      const timeLabel = sourceDate.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-
-      // Initialize date entry
-      if (!map[dateKey]) map[dateKey] = { label: dateLabel, times: {} };
-
-      // Initialize time entry
-      if (!map[dateKey].times[timeKey]) map[dateKey].times[timeKey] = [];
-
-      // Push dose with displayTime
-      map[dateKey].times[timeKey].push({ ...dose, displayTime: timeLabel });
+      if (!map[date]) map[date] = [];
+      map[date].push(dose);
     });
 
-    return map;
+    return Object.entries(map).sort(
+      ([a], [b]) => new Date(b).getTime() - new Date(a).getTime()
+    );
   };
 
-  const grouped = groupByDateAndTime(doses);
+  const groupByTime = (doses: Dose[]) => {
+    const map: Record<string, Dose[]> = {};
 
-  // Convert grouped object into sorted array for rendering
-  const groupByDatesData = Object.entries(grouped)
-    // Sort dates descending (newest first)
-    .sort(([a], [b]) => b.localeCompare(a))
-    .map(([_, { label, times }]) => [
-      label,
-      Object.entries(times)
-        // Sort times ascending
-        .sort(([t1], [t2]) => t1.localeCompare(t2))
-        // Keep both timeLabel and doses array
-        .map(([timeLabel, dosesAtTime]) => [timeLabel, dosesAtTime] as const),
-    ] as const);
+    doses.forEach((dose) => {
+      const time = new Date(dose.scheduled_at).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      if (!map[time]) map[time] = [];
+      map[time].push(dose);
+    });
+
+    return Object.entries(map).sort(
+      ([a], [b]) =>
+        Date.parse(`1970-01-01 ${a}`) - Date.parse(`1970-01-01 ${b}`)
+    );
+
+  };
+
+  const dateGroups = groupByDate(doses);
 
   return (
     <View style={{ padding: 16 }}>
       <Text style={{ fontSize: 24, marginBottom: 12 }}>History</Text>
       <ScrollView>
-        {groupByDatesData.map(([dateLabel, times]) => (
-          <View key={dateLabel} style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 10 }}>
-              {dateLabel}
-            </Text>
-
-            {times.map(([timeLabel, dosesAtTime]) => (
-              <View key={timeLabel} style={{ marginBottom: 16 }}>
-                <Text style={{ fontSize: 14, fontWeight: "500", marginBottom: 6 }}>
-                  {dosesAtTime[0]?.displayTime || timeLabel}
+          {dateGroups.map(([date, dateDoses]) => (
+              <View key={date} style={{ marginBottom: 24 }}>
+                <Text style={{
+                  fontSize: 18,
+                  fontWeight: "700",
+                  marginBottom: 12,
+                }}>
+                  {format(new Date(date), "MMM dd")}
                 </Text>
-
-                {dosesAtTime.map((dose) => (
-                  <DoseCard
-                    key={dose.id}
-                    dose={dose}
-                    onSkip={() => {}}
-                    onTake={() => {}}
-                  />
+    
+                {/* TIME GROUPS */}
+                {groupByTime(dateDoses).map(([time, timeDoses]) => (
+                  <View key={time} style={{ marginBottom: 16 }}>
+                    <Text style={{
+                      fontSize: 16,
+                      fontWeight: "600",
+                      marginBottom: 8,
+                    }}>
+                      {time}
+                    </Text>
+    
+                    {timeDoses.map((dose) => (
+                      <DoseCard
+                        key={dose.id}
+                        dose={dose}
+                        onTake={async () => {}}
+                        onSkip={async () => {}}
+                      />
+                    ))}
+                  </View>
                 ))}
               </View>
             ))}
-          </View>
-        ))}
       </ScrollView>
     </View>
   );
