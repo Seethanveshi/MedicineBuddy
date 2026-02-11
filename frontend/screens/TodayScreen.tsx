@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from "react-native";
 import { takeDose, skipDose, getUpcomingDoses, getDosesByDate } from "../api/doses";
 import DoseCard from "../components/DoseCard";
 import { Dose } from "../types/dose";
-import { configureNotifications, cancelDoseNotification, cancelAllDoseNotifications, scheduleUpcomingDoseNotifications,  } from "../utils/notifications";
+import { configureNotifications, cancelDoseNotification, cancelAllDoseNotifications, scheduleUpcomingDoseNotifications, registerDoseActions, scheduleDoseNotification,  } from "../utils/notifications";
 import { cacheSet } from "@/utils/cache";
 import WeekCalendar from "@/components/WeekCalender";
 import { format, startOfWeek, addWeeks } from "date-fns";
@@ -18,9 +18,9 @@ export default function TodayScreen() {
   const [weekStart, setWeekStart] = useState( startOfWeek(new Date(), { weekStartsOn: 1 }));
   const TODAY_CACHE_KEY = "today_doses";
   const UPCOMING_CACHE_KEY = "upcoming_doses";
-
- const navigation = useNavigation<any>();
-
+  const scheduledDoseIds = useRef<Set<string>>(new Set());
+  const scheduledDoseTimes = useRef<Record<string, string>>({});
+  const navigation = useNavigation<any>(); 
 
   useEffect(() => {
     load(selectedDate);
@@ -40,15 +40,40 @@ export default function TodayScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      load(selectedDate); 
+      load(selectedDate);
       (async () => {
         const allowed = await configureNotifications();
         if (!allowed) return;
 
-        await cancelAllDoseNotifications();
         const upcoming = await getUpcomingDoses();
-        await cacheSet(UPCOMING_CACHE_KEY, upcoming);
-        await scheduleUpcomingDoseNotifications(upcoming);
+        const upcomingIds = new Set(upcoming.map(d => d.id));
+
+        // Cancel notifications that no longer exist
+        for (const id of scheduledDoseIds.current) {
+          if (!upcomingIds.has(id)) {
+            await cancelDoseNotification(id);
+            scheduledDoseIds.current.delete(id);
+            delete scheduledDoseTimes.current[id];
+          }
+        }
+
+        // Schedule new or updated notifications
+        for (const dose of upcoming) {
+          const prevTime = scheduledDoseTimes.current[dose.id];
+          if (
+            !scheduledDoseIds.current.has(dose.id) || 
+            prevTime !== dose.scheduled_at
+          ) {
+            // Cancel previous if exists
+            if (scheduledDoseIds.current.has(dose.id)) {
+              await cancelDoseNotification(dose.id);
+            }
+
+            await scheduleDoseNotification(dose);
+            scheduledDoseIds.current.add(dose.id);
+            scheduledDoseTimes.current[dose.id] = dose.scheduled_at;
+          }
+        }
       })();
     }, [selectedDate])
   );
