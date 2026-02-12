@@ -72,3 +72,5 @@ func (s *SMTPEmailService) BuildWeeklyEmail(r dto.WeeklyDetailedReport) string {
 
 	return b.String()
 }
+
+

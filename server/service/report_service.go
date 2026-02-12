@@ -58,3 +58,4 @@ func (s *ReportService) WeeklyDetailed(
 
 	return result, nil
 }
+

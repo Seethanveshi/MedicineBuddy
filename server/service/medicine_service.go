@@ -59,3 +59,5 @@ func (s *MedicineService) CreateMedicine(
 	// 🔥 Trigger dose generation
 	return s.doseService.GenerateUpcomingDoses(ctx, medicine, schedule, 7)
 }
+
+
