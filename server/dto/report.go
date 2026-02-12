@@ -19,3 +19,4 @@ type WeeklyDetailedReport struct {
 	PatientName string      `json:"patient_name"`
 	Days        []DayReport `json:"days"`
 }
+

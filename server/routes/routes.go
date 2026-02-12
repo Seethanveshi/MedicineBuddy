@@ -5,6 +5,7 @@ import (
 	"MedicineBuddy/repository"
 	"MedicineBuddy/service"
 	"database/sql"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,7 +25,8 @@ func Router(r *gin.Engine, db *sql.DB) {
 
 	reportRepository := repository.NewDoseRepository(db)
 	reportService := service.NewReportService(reportRepository)
-	reportHandler := handler.NewReportHandler(reportService)
+	emailService := service.NewSMTPEmailService(os.Getenv("SMTP_HOST"), os.Getenv("SMTP_PORT"), os.Getenv("SMTP_USER"), os.Getenv("SMTP_PASS"), os.Getenv("SMTP_FROM"))
+	reportHandler := handler.NewReportHandler(reportService, mediTakerService, emailService)
 
 	r.POST("/meditakers", mediTakerHandler.CreateMediTaker)
 	r.GET("/meditakers", mediTakerHandler.List)
@@ -48,5 +50,6 @@ func Router(r *gin.Engine, db *sql.DB) {
 	reports := r.Group("/reports")
 	{
 		reports.GET("/weekly", reportHandler.WeeklyDetailed)
+		reports.POST("/send-test", reportHandler.SendTest)
 	}
 }
