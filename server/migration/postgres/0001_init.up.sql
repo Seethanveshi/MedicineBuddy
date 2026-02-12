@@ -1,12 +1,12 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- CREATE TABLE users (
---     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
---     user_name TEXT NOT NULL,
---     email TEXT NOT NULL,
---     password TEXT NOT NULL,
---     created_at TIMESTAMPTZ DEFAULT NOW()
--- );
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    password TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 
 CREATE TABLE medicines (
@@ -33,4 +33,13 @@ CREATE TABLE dose_logs (
     scheduled_at TIMESTAMPTZ NOT NULL,
     status TEXT DEFAULT 'pending',
     taken_at TIMESTAMPTZ
+);
+
+CREATE TABLE meditakers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  relationship TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
 );

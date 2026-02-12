@@ -226,3 +226,59 @@ func (r *DoseRepositoryImple) GetDosesByDate(ctx context.Context, date time.Time
 
 	return doses, nil
 }
+
+func (r *DoseRepositoryImple) WeeklyDetailed(
+	ctx context.Context,
+	patientID uuid.UUID,
+	start time.Time,
+	end time.Time,
+) (string, []dto.DoseDetail, error) {
+
+	query := `
+	SELECT 
+		u.user_name,
+		m.name,
+		m.dosage,
+		dl.scheduled_at,
+		dl.status,
+		dl.taken_at
+	FROM dose_logs dl
+	JOIN medicines m ON m.id = dl.medicine_id
+	JOIN users u ON u.id = m.user_id
+	WHERE m.user_id = $1
+	AND dl.scheduled_at >= $2
+	AND dl.scheduled_at < $3
+	ORDER BY dl.scheduled_at
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, patientID, start, end)
+	if err != nil {
+		return "", nil, err
+	}
+	defer rows.Close()
+
+	var (
+		patientName string
+		list        []dto.DoseDetail
+	)
+
+	for rows.Next() {
+		var d dto.DoseDetail
+
+		err := rows.Scan(
+			&patientName,
+			&d.MedicineName,
+			&d.Dosage,
+			&d.ScheduledAt,
+			&d.Status,
+			&d.TakenAt,
+		)
+		if err != nil {
+			return "", nil, err
+		}
+
+		list = append(list, d)
+	}
+
+	return patientName, list, nil
+}

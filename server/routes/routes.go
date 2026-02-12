@@ -18,6 +18,18 @@ func Router(r *gin.Engine, db *sql.DB) {
 	medicineService := service.NewMedicineService(medicineRepository, doseService)
 	medicineHandler := handler.NewMedicineHandler(medicineService)
 
+	mediTakerReposotory := repository.NewMediTakerRepository(db)
+	mediTakerService := service.NewMediTakerService(mediTakerReposotory)
+	mediTakerHandler := handler.NewMediTakerHandler(mediTakerService)
+
+	reportRepository := repository.NewDoseRepository(db)
+	reportService := service.NewReportService(reportRepository)
+	reportHandler := handler.NewReportHandler(reportService)
+
+	r.POST("/meditakers", mediTakerHandler.CreateMediTaker)
+	r.GET("/meditakers", mediTakerHandler.List)
+	r.DELETE("/meditakers/:id", mediTakerHandler.Delete)
+
 	doses := r.Group("/doses")
 	{
 		doses.GET("/date", doseHandler.GetDosesByDate)
@@ -31,5 +43,10 @@ func Router(r *gin.Engine, db *sql.DB) {
 	medicines := r.Group("/medicines")
 	{
 		medicines.POST("", medicineHandler.CreateMedicine)
+	}
+
+	reports := r.Group("/reports")
+	{
+		reports.GET("/weekly", reportHandler.WeeklyDetailed)
 	}
 }

@@ -72,3 +72,4 @@ func (h *MedicineHandler) CreateMedicine(c *gin.Context) {
 
 	c.Status(http.StatusCreated)
 }
+

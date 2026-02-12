@@ -17,4 +17,5 @@ type DoseRepository interface {
 	GetDosesBetween(ctx context.Context, from time.Time, to time.Time) ([]dto.DoseLogResponse, error)
 	GetDoseHistory(ctx context.Context, limit int) ([]dto.DoseLogResponse, error)
 	GetDosesByDate(ctx context.Context, date time.Time) ([]dto.DoseLogResponse, error)
+	WeeklyDetailed(ctx context.Context, patientID uuid.UUID, start time.Time, end time.Time) (string, []dto.DoseDetail, error)
 }
