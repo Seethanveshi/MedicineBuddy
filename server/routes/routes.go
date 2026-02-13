@@ -31,6 +31,7 @@ func Router(r *gin.Engine, db *sql.DB) {
 	r.POST("/meditakers", mediTakerHandler.CreateMediTaker)
 	r.GET("/meditakers", mediTakerHandler.List)
 	r.DELETE("/meditakers/:id", mediTakerHandler.Delete)
+	r.PUT("/meditakers/:id", mediTakerHandler.Update)
 
 	doses := r.Group("/doses")
 	{

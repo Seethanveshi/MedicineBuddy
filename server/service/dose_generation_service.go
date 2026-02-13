@@ -5,7 +5,6 @@ import (
 	"MedicineBuddy/model"
 	"MedicineBuddy/repository"
 	"context"
-	"log"
 	"slices"
 	"time"
 
@@ -86,7 +85,6 @@ func (s *DoseService) GenerateUpcomingDoses(
 }
 
 func (s *DoseService) MarkMissedDose(ctx context.Context) error {
-	log.Println("Execute in RunWeeklyReportJob")
 
 	now := time.Now().UTC()
 	return s.doseRepository.MarkMissedDose(ctx, now)

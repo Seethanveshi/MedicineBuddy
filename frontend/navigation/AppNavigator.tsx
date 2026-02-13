@@ -2,7 +2,6 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import TodayScreen from "../screens/TodayScreen";
-import UpcomingScreen from "../screens/UpcomingScreen";
 import HistoryScreen from "../screens/HistoryScreen";
 import AddMedicineScreen from "../screens/AddMedicineScreen";
 import MediTakersScreen from "@/screens/MediTakerScreen";
@@ -20,7 +19,7 @@ function Tabs() {
   return (
     <Tab.Navigator>
       <Tab.Screen name="Today" component={TodayScreen} />
-      <Tab.Screen name="Upcoming" component={UpcomingScreen} />
+      <Tab.Screen name="Meditaker" component={MediTakersScreen} />
       <Tab.Screen name="History" component={HistoryScreen} />
     </Tab.Navigator>
   );

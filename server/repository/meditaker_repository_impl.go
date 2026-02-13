@@ -102,3 +102,44 @@ func (r *MediTakerImpl) Delete(ctx context.Context, id uuid.UUID, patientID uuid
 
 	return nil
 }
+
+func (r *MediTakerImpl) Update(
+	ctx context.Context,
+	id uuid.UUID,
+	patientID uuid.UUID,
+	req dto.MediTakerRequest,
+) error {
+
+	query := `
+		UPDATE meditakers
+		SET name = $1,
+		    email = $2,
+		    relationship = $3
+		WHERE id = $4
+		AND patient_id = $5
+	`
+
+	result, err := r.db.ExecContext(
+		ctx,
+		query,
+		req.Name,
+		req.Email,
+		req.Relationship,
+		id,
+		patientID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("not found")
+	}
+
+	return nil
+}

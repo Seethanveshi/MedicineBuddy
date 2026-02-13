@@ -77,5 +77,9 @@ export const updateMediTaker = async (
   id: string,
   data: { name: string; email: string; relationship?: string }
 ) => {
-  await API.put(`/meditakers/${id}`, data);
+  try {
+    await API.put(`/meditakers/${id}`, data); 
+  } catch (error) {
+    console.error(error)
+  }
 };

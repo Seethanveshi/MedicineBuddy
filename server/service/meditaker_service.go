@@ -22,7 +22,7 @@ func NewMediTakerService(meditakerRepository repository.MediTakerRepository) *Me
 func (s *MediTakerService) CreateMediTaker(
 	ctx context.Context,
 	patientID uuid.UUID,
-	req dto.CreateMediTakerRequest,
+	req dto.MediTakerRequest,
 ) error {
 
 	m := model.MediTaker{
@@ -43,4 +43,8 @@ func (s *MediTakerService) ListByPatient(ctx context.Context, patientID uuid.UUI
 func (s *MediTakerService) Delete(ctx context.Context, id uuid.UUID, patientID uuid.UUID,
 ) error {
 	return s.meditakerRepository.Delete(ctx, id, patientID)
+}
+
+func (s *MediTakerService) Update(ctx context.Context, id uuid.UUID, patientID uuid.UUID, medireq dto.MediTakerRequest) error {
+	return s.meditakerRepository.Update(ctx, id, patientID, medireq)
 }

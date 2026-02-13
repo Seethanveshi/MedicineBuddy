@@ -18,7 +18,7 @@ func NewMediTakerHandler(mts *service.MediTakerService) *MediTakerHandler {
 }
 
 func (h *MediTakerHandler) CreateMediTaker(c *gin.Context) {
-	var req dto.CreateMediTakerRequest
+	var req dto.MediTakerRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -54,7 +54,6 @@ func (h *MediTakerHandler) List(c *gin.Context) {
 }
 
 func (h *MediTakerHandler) Delete(c *gin.Context) {
-
 	idParam := c.Param("id")
 
 	id, err := uuid.Parse(idParam)
@@ -72,4 +71,30 @@ func (h *MediTakerHandler) Delete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+}
+
+func (h *MediTakerHandler) Update(c *gin.Context) {
+	idParam := c.Param("id")
+	id, err := uuid.Parse(idParam)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid id"})
+		return
+	}
+
+	var medireq dto.MediTakerRequest
+	if err := c.ShouldBindJSON(&medireq); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	patientID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+
+	err = h.meditakerService.Update(c.Request.Context(), id, patientID, medireq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, "Updated")
 }
