@@ -8,6 +8,7 @@ import (
 	"MedicineBuddy/service"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type MedicineHandler struct {
@@ -73,3 +74,27 @@ func (h *MedicineHandler) CreateMedicine(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
+func (h *MedicineHandler) GetByID(c *gin.Context) {
+
+	idParam := c.Param("id")
+
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	patientID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+
+	data, err := h.medicineService.GetByID(
+		c.Request.Context(),
+		id,
+		patientID,
+	)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
+}

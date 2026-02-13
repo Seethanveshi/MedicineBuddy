@@ -1,9 +1,14 @@
 package repository
 
 import (
+	"MedicineBuddy/dto"
 	"MedicineBuddy/model"
 	"context"
 	"database/sql"
+
+	"github.com/lib/pq"
+
+	"github.com/google/uuid"
 )
 
 type MedicineRepository struct {
@@ -60,4 +65,51 @@ func (r *MedicineRepository) CreateMedicineWithSchedule(ctx context.Context, med
 
 	return tx.Commit()
 
+}
+
+func (r *MedicineRepository) GetByID(
+	ctx context.Context,
+	id uuid.UUID,
+	patientID uuid.UUID,
+) (dto.MedicineDetailResponse, error) {
+
+	query := `
+	SELECT 
+		m.id,
+		m.name,
+		m.dosage,
+		m.start_date,
+		m.end_date,
+		s.time_of_day,
+		s.days_of_week
+	FROM medicines m
+	JOIN schedules s ON s.medicine_id = m.id
+	WHERE m.id = $1
+	AND m.user_id = $2
+	`
+
+	var res dto.MedicineDetailResponse
+	var days pq.Int64Array
+
+	err := r.db.QueryRowContext(ctx, query, id, patientID).
+		Scan(
+			&res.ID,
+			&res.Name,
+			&res.Dosage,
+			&res.StartDate,
+			&res.EndDate,
+			&res.Schedule.Time,
+			&days,
+		)
+
+	if err != nil {
+		return res, err
+	}
+
+	res.Schedule.DaysOfWeek = make([]int, len(days))
+	for i, d := range days {
+		res.Schedule.DaysOfWeek[i] = int(d)
+	}
+
+	return res, nil
 }

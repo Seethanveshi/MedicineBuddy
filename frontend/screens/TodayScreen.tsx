@@ -3,10 +3,9 @@ import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from "rea
 import { takeDose, skipDose, getUpcomingDoses, getDosesByDate } from "../api/doses";
 import DoseCard from "../components/DoseCard";
 import { Dose } from "../types/dose";
-import { configureNotifications, cancelDoseNotification, cancelAllDoseNotifications, scheduleUpcomingDoseNotifications, registerDoseActions, scheduleDoseNotification,  } from "../utils/notifications";
-import { cacheSet } from "@/utils/cache";
+import { configureNotifications, cancelDoseNotification, scheduleDoseNotification,  } from "../utils/notifications";
 import WeekCalendar from "@/components/WeekCalender";
-import { format, startOfWeek, addWeeks } from "date-fns";
+import { format, startOfWeek } from "date-fns";
 import {useFocusEffect, useNavigation } from "@react-navigation/native";
 import CalendarHeader from "@/components/CalendarHeader";
 import { groupByTime } from "@/utils/groupBy";
@@ -16,8 +15,6 @@ export default function TodayScreen() {
   const [doses, setDoses] = useState<Dose[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [weekStart, setWeekStart] = useState( startOfWeek(new Date(), { weekStartsOn: 1 }));
-  const TODAY_CACHE_KEY = "today_doses";
-  const UPCOMING_CACHE_KEY = "upcoming_doses";
   const scheduledDoseIds = useRef<Set<string>>(new Set());
   const scheduledDoseTimes = useRef<Record<string, string>>({});
   const navigation = useNavigation<any>(); 

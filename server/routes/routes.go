@@ -45,6 +45,7 @@ func Router(r *gin.Engine, db *sql.DB) {
 
 	medicines := r.Group("/medicines")
 	{
+		medicines.GET("/:id", medicineHandler.GetByID)
 		medicines.POST("", medicineHandler.CreateMedicine)
 	}
 

@@ -8,11 +8,6 @@ import { format } from "date-fns";
 export default function HistoryScreen() {
   const [doses, setDoses] = useState<Dose[]>([]);
 
-  type GroupedDoses = Record<string, { 
-    label: string; 
-    times: Record<string, (Dose & { displayTime: string })[]> 
-  }>;
-
   useEffect(() => {
     const fetchHistoryDoses = async () => {
       const res = await API.get<Dose[]>("/doses/history");

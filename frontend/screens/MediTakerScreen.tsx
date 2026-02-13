@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { View, Text, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
 import { deleteMediTaker, listMediTakers } from "@/api/doses";
 import { MediTaker } from "@/types/meditaker";

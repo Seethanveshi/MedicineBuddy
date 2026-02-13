@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { createMediTaker, updateMediTaker } from "@/api/doses";
-import { StyleSheet } from "react-native";
-
 
 export default function AddMediTakerScreen() {
   const navigation = useNavigation<any>();

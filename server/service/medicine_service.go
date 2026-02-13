@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"MedicineBuddy/dto"
 	"MedicineBuddy/model"
 	"MedicineBuddy/repository"
 
@@ -11,8 +12,8 @@ import (
 )
 
 type MedicineService struct {
-	medicineRepo *repository.MedicineRepository
-	doseService  *DoseService
+	medicineRepository *repository.MedicineRepository
+	doseService        *DoseService
 }
 
 func NewMedicineService(
@@ -20,8 +21,8 @@ func NewMedicineService(
 	doseSvc *DoseService,
 ) *MedicineService {
 	return &MedicineService{
-		medicineRepo: medRepo,
-		doseService:  doseSvc,
+		medicineRepository: medRepo,
+		doseService:        doseSvc,
 	}
 }
 
@@ -52,12 +53,17 @@ func (s *MedicineService) CreateMedicine(
 		DaysOfWeek: daysOfWeek,
 	}
 
-	if err := s.medicineRepo.CreateMedicineWithSchedule(ctx, medicine, schedule); err != nil {
+	if err := s.medicineRepository.CreateMedicineWithSchedule(ctx, medicine, schedule); err != nil {
 		return err
 	}
 
-	// 🔥 Trigger dose generation
 	return s.doseService.GenerateUpcomingDoses(ctx, medicine, schedule, 7)
 }
 
-
+func (s *MedicineService) GetByID(
+	ctx context.Context,
+	id uuid.UUID,
+	patientID uuid.UUID,
+) (dto.MedicineDetailResponse, error) {
+	return s.medicineRepository.GetByID(ctx, id, patientID)
+}
