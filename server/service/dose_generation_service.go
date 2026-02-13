@@ -5,6 +5,7 @@ import (
 	"MedicineBuddy/model"
 	"MedicineBuddy/repository"
 	"context"
+	"database/sql"
 	"slices"
 	"time"
 
@@ -19,70 +20,73 @@ func NewDoseService(repo repository.DoseRepository) *DoseService {
 	return &DoseService{doseRepository: repo}
 }
 
-func (s *DoseService) GenerateUpcomingDoses(
-	ctx context.Context,
-	medicine *model.Medicine,
-	schedule *model.Schedule,
-	daysAhead int,
-) error {
-	now := time.Now().UTC()
-	start := now.Truncate(24 * time.Hour)
-	end := start.AddDate(0, 0, daysAhead)
+// func (s *DoseService) GenerateUpcomingDoses(
+// 	ctx context.Context,
+// 	medicine *model.Medicine,
+// 	schedule *model.Schedule,
+// 	daysAhead int,
+// ) error {
+// 	now := time.Now().UTC()
+// 	start := now.Truncate(24 * time.Hour)
+// 	end := start.AddDate(0, 0, daysAhead)
 
-	for day := start; day.Before(end); day = day.AddDate(0, 0, 1) {
-		if day.Before(medicine.StartDate) {
-			continue
-		}
+// 	tx, err := s.db.BeginTx(ctx, nil)
 
-		if medicine.EndDate != nil && day.After(*medicine.EndDate) {
-			continue
-		}
 
-		weekday := int(day.Weekday())
+// 	for day := start; day.Before(end); day = day.AddDate(0, 0, 1) {
+// 		if day.Before(medicine.StartDate) {
+// 			continue
+// 		}
 
-		if !contains(schedule.DaysOfWeek, weekday) {
-			continue
-		}
+// 		if medicine.EndDate != nil && day.After(*medicine.EndDate) {
+// 			continue
+// 		}
 
-		scheduledLocal := time.Date(
-			day.Year(),
-			day.Month(),
-			day.Day(),
-			schedule.TimeOfDay.Hour(),
-			schedule.TimeOfDay.Minute(),
-			0,
-			0,
-			time.Local,
-		)
+// 		weekday := int(day.Weekday())
 
-		scheduledAt := scheduledLocal.UTC()
+// 		if !contains(schedule.DaysOfWeek, weekday) {
+// 			continue
+// 		}
 
-		if scheduledAt.Before(now) {
-			continue
-		}
+// 		scheduledLocal := time.Date(
+// 			day.Year(),
+// 			day.Month(),
+// 			day.Day(),
+// 			schedule.TimeOfDay.Hour(),
+// 			schedule.TimeOfDay.Minute(),
+// 			0,
+// 			0,
+// 			time.Local,
+// 		)
 
-		exists, err := s.doseRepository.Exists(ctx, medicine.ID, scheduledAt)
-		if err != nil {
-			return err
-		}
-		if exists {
-			continue
-		}
+// 		scheduledAt := scheduledLocal.UTC()
 
-		dose := &model.DoseLog{
-			ID:         uuid.New(),
-			MedicineID: medicine.ID,
-			ScheduleAt: scheduledAt,
-			Status:     model.DosePending,
-		}
+// 		if scheduledAt.Before(now) {
+// 			continue
+// 		}
 
-		if err := s.doseRepository.Create(ctx, dose); err != nil {
-			return err
-		}
-	}
+// 		exists, err := s.doseRepository.Exists(ctx, tx, medicine.ID, scheduledAt)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		if exists {
+// 			continue
+// 		}
 
-	return nil
-}
+// 		dose := &model.DoseLog{
+// 			ID:         uuid.New(),
+// 			MedicineID: medicine.ID,
+// 			ScheduleAt: scheduledAt,
+// 			Status:     model.DosePending,
+// 		}
+
+// 		if err := s.doseRepository.Create(ctx, tx, dose); err != nil {
+// 			return err
+// 		}
+// 	}
+
+// 	return nil
+// }
 
 func (s *DoseService) MarkMissedDose(ctx context.Context) error {
 
@@ -163,4 +167,70 @@ func (s *DoseService) GetDoseHistory(
 ) ([]dto.DoseLogResponse, error) {
 
 	return s.doseRepository.GetDoseHistory(ctx, limit)
+}
+
+func (s *DoseService) GenerateUpcomingDosesTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	medicine *model.Medicine,
+	schedule *model.Schedule,
+	daysAhead int,
+) error {
+
+	now := time.Now().UTC()
+	start := now.Truncate(24 * time.Hour)
+	end := start.AddDate(0, 0, daysAhead)
+
+	for day := start; day.Before(end); day = day.AddDate(0, 0, 1) {
+		if day.Before(medicine.StartDate) {
+			continue
+		}
+
+		if medicine.EndDate != nil && day.After(*medicine.EndDate) {
+			continue
+		}
+
+		weekday := int(day.Weekday())
+		if !contains(schedule.DaysOfWeek, weekday) {
+			continue
+		}
+
+		scheduledLocal := time.Date(
+			day.Year(),
+			day.Month(),
+			day.Day(),
+			schedule.TimeOfDay.Hour(),
+			schedule.TimeOfDay.Minute(),
+			0,
+			0,
+			time.Local,
+		)
+
+		scheduledAt := scheduledLocal.UTC()
+
+		if scheduledAt.Before(now) {
+			continue
+		}
+
+		exists, err := s.doseRepository.Exists(ctx, tx, medicine.ID, scheduledAt)
+		if err != nil {
+			return err
+		}
+		if exists {
+			continue
+		}
+
+		dose := &model.DoseLog{
+			ID:         uuid.New(),
+			MedicineID: medicine.ID,
+			ScheduleAt: scheduledAt,
+			Status:     model.DosePending,
+		}
+
+		if err := s.doseRepository.Create(ctx, tx, dose); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

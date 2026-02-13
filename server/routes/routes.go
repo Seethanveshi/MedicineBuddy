@@ -16,7 +16,7 @@ func Router(r *gin.Engine, db *sql.DB) {
 	doseHandler := handler.NewDoseHandler(doseService)
 
 	medicineRepository := repository.NewMedicineRepository(db)
-	medicineService := service.NewMedicineService(medicineRepository, doseService)
+	medicineService := service.NewMedicineService(db, medicineRepository, doseService, &doseRepository)
 	medicineHandler := handler.NewMedicineHandler(medicineService)
 
 	mediTakerReposotory := repository.NewMediTakerRepository(db)
@@ -45,6 +45,7 @@ func Router(r *gin.Engine, db *sql.DB) {
 
 	medicines := r.Group("/medicines")
 	{
+		medicines.PUT("/:id", medicineHandler.Update)
 		medicines.GET("/:id", medicineHandler.GetByID)
 		medicines.POST("", medicineHandler.CreateMedicine)
 	}

@@ -5,6 +5,8 @@ import (
 	"MedicineBuddy/model"
 	"context"
 	"database/sql"
+	"fmt"
+	"time"
 
 	"github.com/lib/pq"
 
@@ -112,4 +114,162 @@ func (r *MedicineRepository) GetByID(
 	}
 
 	return res, nil
+}
+
+func (r *MedicineRepository) DeleteFutureByMedicine(
+	ctx context.Context,
+	tx *sql.Tx,
+	medicineID uuid.UUID,
+	from time.Time,
+) error {
+
+	query := `
+		DELETE FROM dose_logs
+		WHERE medicine_id = $1
+		AND scheduled_at > $2
+		AND status = 'pending'
+	`
+
+	_, err := r.db.ExecContext(
+		ctx,
+		query,
+		medicineID,
+		from,
+	)
+
+	return err
+}
+
+func (r *MedicineRepository) UpdateTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	medicineID uuid.UUID,
+	patientID uuid.UUID,
+	req dto.CreateMedicineRequest,
+) error {
+
+	query := `
+		UPDATE medicines
+		SET name = $1,
+		    dosage = $2,
+		    start_date = $3,
+		    end_date = $4
+		WHERE id = $5
+		AND user_id = $6
+	`
+
+	result, err := tx.ExecContext(
+		ctx,
+		query,
+		req.Name,
+		req.Dosage,
+		req.StartDate,
+		req.EndDate,
+		medicineID,
+		patientID,
+	)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("medicine not found")
+	}
+
+	return nil
+}
+
+func (r *MedicineRepository) UpdateScheduleByMedicineTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	medicineID uuid.UUID,
+	s dto.Schedule,
+) error {
+
+	query := `
+		UPDATE schedules
+		SET time_of_day = $1,
+		    days_of_week = $2
+		WHERE medicine_id = $3
+	`
+
+	_, err := tx.ExecContext(
+		ctx,
+		query,
+		s.Time,
+		pq.Array(s.DaysOfWeek),
+		medicineID,
+	)
+
+	return err
+}
+
+func (r *MedicineRepository) GetScheduleByMedicineTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	medicineID uuid.UUID,
+) (*model.Schedule, error) {
+
+	query := `
+		SELECT id, medicine_id, time_of_day, days_of_week
+		FROM schedules
+		WHERE medicine_id = $1
+	`
+
+	var s model.Schedule
+	var days pq.Int64Array
+
+	err := tx.QueryRowContext(ctx, query, medicineID).
+		Scan(
+			&s.ID,
+			&s.MedicineID,
+			&s.TimeOfDay,
+			&days,
+		)
+	if err != nil {
+		return nil, err
+	}
+
+	s.DaysOfWeek = make([]int, len(days))
+	for i, d := range days {
+		s.DaysOfWeek[i] = int(d)
+	}
+
+	return &s, nil
+}
+
+func (r *MedicineRepository) GetModelByIDTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	medicineID uuid.UUID,
+) (*model.Medicine, error) {
+
+	query := `
+		SELECT id, user_id, name, dosage, start_date, end_date
+		FROM medicines
+		WHERE id = $1
+	`
+
+	var m model.Medicine
+
+	err := tx.QueryRowContext(ctx, query, medicineID).
+		Scan(
+			&m.ID,
+			&m.UserID,
+			&m.Name,
+			&m.Dosage,
+			&m.StartDate,
+			&m.EndDate,
+		)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &m, nil
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"MedicineBuddy/dto"
@@ -12,18 +13,32 @@ import (
 )
 
 type MedicineService struct {
+	db                 *sql.DB
 	medicineRepository *repository.MedicineRepository
 	doseService        *DoseService
+	doseRepository     *repository.DoseRepository
 }
 
-func NewMedicineService(
+func NewMedicineService(db *sql.DB,
 	medRepo *repository.MedicineRepository,
 	doseSvc *DoseService,
+	doseRepository *repository.DoseRepository,
+
 ) *MedicineService {
 	return &MedicineService{
+		db:                 db,
 		medicineRepository: medRepo,
 		doseService:        doseSvc,
+		doseRepository:     doseRepository,
 	}
+}
+
+func (s *MedicineService) GetByID(
+	ctx context.Context,
+	id uuid.UUID,
+	patientID uuid.UUID,
+) (dto.MedicineDetailResponse, error) {
+	return s.medicineRepository.GetByID(ctx, id, patientID)
 }
 
 func (s *MedicineService) CreateMedicine(
@@ -36,6 +51,12 @@ func (s *MedicineService) CreateMedicine(
 	daysOfWeek []int,
 ) error {
 
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
 	medicineID := uuid.New()
 	medicine := &model.Medicine{
 		ID:        medicineID,
@@ -57,13 +78,72 @@ func (s *MedicineService) CreateMedicine(
 		return err
 	}
 
-	return s.doseService.GenerateUpcomingDoses(ctx, medicine, schedule, 7)
+	return s.doseService.GenerateUpcomingDosesTx(ctx, tx, medicine, schedule, 7)
 }
 
-func (s *MedicineService) GetByID(
+func (s *MedicineService) Update(
 	ctx context.Context,
-	id uuid.UUID,
+	medicineID uuid.UUID,
 	patientID uuid.UUID,
-) (dto.MedicineDetailResponse, error) {
-	return s.medicineRepository.GetByID(ctx, id, patientID)
+	req dto.CreateMedicineRequest,
+) error {
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	// 1️⃣ update medicine
+	err = s.medicineRepository.UpdateTx(ctx, tx, medicineID, patientID, req)
+	if err != nil {
+		return err
+	}
+
+	// 2️⃣ update schedule
+	err = s.medicineRepository.UpdateScheduleByMedicineTx(
+		ctx,
+		tx,
+		medicineID,
+		req.Schedule,
+	)
+	if err != nil {
+		return err
+	}
+
+	// 3️⃣ delete future pending doses
+	err = s.medicineRepository.DeleteFutureByMedicine(
+		ctx,
+		tx,
+		medicineID,
+		time.Now(),
+	)
+	if err != nil {
+		return err
+	}
+
+	// 4️⃣ fetch updated medicine & schedule (important)
+	medicine, err := s.medicineRepository.GetModelByIDTx(ctx, tx, medicineID)
+	if err != nil {
+		return err
+	}
+
+	schedule, err := s.medicineRepository.GetScheduleByMedicineTx(ctx, tx, medicineID)
+	if err != nil {
+		return err
+	}
+
+	err = s.doseService.GenerateUpcomingDosesTx(
+		ctx,
+		tx,
+		medicine,
+		schedule,
+		7,
+	)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }

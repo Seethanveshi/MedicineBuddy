@@ -19,7 +19,7 @@ func NewDoseRepository(db *sql.DB) DoseRepository {
 	return &DoseRepositoryImple{db: db}
 }
 
-func (r *DoseRepositoryImple) Exists(ctx context.Context, medicineID uuid.UUID, scheduleAt time.Time) (bool, error) {
+func (r *DoseRepositoryImple) Exists(ctx context.Context, tx *sql.Tx, medicineID uuid.UUID, scheduleAt time.Time) (bool, error) {
 	var exists bool
 	query := `
 		SELECT EXISTS (
@@ -32,7 +32,7 @@ func (r *DoseRepositoryImple) Exists(ctx context.Context, medicineID uuid.UUID, 
 	return exists, err
 }
 
-func (r *DoseRepositoryImple) Create(ctx context.Context, dose *model.DoseLog) error {
+func (r *DoseRepositoryImple) Create(ctx context.Context, tx *sql.Tx, dose *model.DoseLog) error {
 	query := `
 		INSERT INTO dose_logs (id, medicine_id, scheduled_at, status)
 		VALUES($1, $2, $3, $4)
