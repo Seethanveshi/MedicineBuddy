@@ -172,7 +172,7 @@ export default function TodayScreen() {
         </View>
         </ScrollView>
         <TouchableOpacity
-          onPress={() => navigation.navigate("AddMedicine")}
+          onPress={() => navigation.navigate("MediTakers")}
           style={{
             position: "absolute",
             bottom: 20,

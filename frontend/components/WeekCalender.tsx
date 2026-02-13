@@ -1,6 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { addDays, startOfWeek, format, addWeeks } from "date-fns";
-import { useState } from "react";
+import { addDays, format } from "date-fns";
 
 type Props = {
   selected: Date;

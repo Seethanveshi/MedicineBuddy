@@ -5,6 +5,8 @@ import TodayScreen from "../screens/TodayScreen";
 import UpcomingScreen from "../screens/UpcomingScreen";
 import HistoryScreen from "../screens/HistoryScreen";
 import AddMedicineScreen from "../screens/AddMedicineScreen";
+import MediTakersScreen from "@/screens/MediTakerScreen";
+import AddMediTakerScreen from "@/screens/AddMediTakerScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -40,6 +42,17 @@ export default function AppNavigator() {
         component={AddMedicineScreen}
         options={{ title: "Add Medicine" }}
       />
+      <Stack.Screen
+        name="MediTakers"
+        component={MediTakersScreen}
+        options={{ title: "MediTakers" }}
+      />
+      <Stack.Screen
+        name="AddMediTaker"
+        component={AddMediTakerScreen}
+        options={{ title: "Add MediTaker" }}
+      />
+
     </Stack.Navigator>
   );
 }

@@ -1,4 +1,5 @@
 import { Dose } from "@/types/dose";
+import { MediTaker } from "@/types/meditaker";
 import axios from "axios";
 import { format } from "date-fns";
 
@@ -52,4 +53,22 @@ export const createMedicine = async (
   }  catch (error) {
     console.error(error);
   }
+};
+
+export const listMediTakers = async (): Promise<MediTaker[]> => {
+  const res = await API.get<MediTaker[]>("/meditakers");
+  return res.data;
+};
+
+export const createMediTaker = async (data: {
+  name: string;
+  email: string;
+  relationship?: string;
+}) => {
+  const res = await API.post("/meditakers", data);
+  return res.data;
+};
+
+export const deleteMediTaker = async (id: string) => {
+  await API.delete(`/meditakers/${id}`);
 };
