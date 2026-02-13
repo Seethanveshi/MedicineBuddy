@@ -145,7 +145,7 @@ func (r *MedicineRepository) UpdateTx(
 	tx *sql.Tx,
 	medicineID uuid.UUID,
 	patientID uuid.UUID,
-	req dto.CreateMedicineRequest,
+	req dto.UpdateReq,
 ) error {
 
 	query := `
@@ -188,7 +188,8 @@ func (r *MedicineRepository) UpdateScheduleByMedicineTx(
 	ctx context.Context,
 	tx *sql.Tx,
 	medicineID uuid.UUID,
-	s dto.Schedule,
+	time time.Time,
+	dayOfWeek []int,
 ) error {
 
 	query := `
@@ -201,8 +202,8 @@ func (r *MedicineRepository) UpdateScheduleByMedicineTx(
 	_, err := tx.ExecContext(
 		ctx,
 		query,
-		s.Time,
-		pq.Array(s.DaysOfWeek),
+		time,
+		pq.Array(dayOfWeek),
 		medicineID,
 	)
 

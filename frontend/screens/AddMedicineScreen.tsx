@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useNavigation } from "@react-navigation/native";
-import { createMedicine } from "@/api/doses";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { createMedicine, getMedicineById, updateMedicine } from "@/api/doses";
+import { format } from "date-fns";
 
 
 export default function AddMedicineScreen() {
@@ -18,6 +19,26 @@ export default function AddMedicineScreen() {
   const [weekdays, setWeekdays] = useState<number[]>([]);
   const navigation = useNavigation();
 
+  const route = useRoute<any>();
+
+  const medicineId = route.params?.id;
+  const isEdit = !!medicineId;
+
+  useEffect(() => {
+    if (!isEdit) return;
+
+    (async () => {
+        const data = await getMedicineById(medicineId);
+
+        setName(data.name);
+        setDosage(data.dosage);
+        setStartDate(new Date(data.start_date));
+        setEndDate(data.end_date ? new Date(data.end_date) : null);
+        setTime(data.schedule.time.substring(11, 16));
+        setWeekdays(data.schedule.days_of_week);
+    })();
+    }, [medicineId]);
+
   const validate = () => {
     if (!name.trim()) return "Medicine name required";
     if (!dosage.trim()) return "Dosage required";
@@ -28,11 +49,42 @@ export default function AddMedicineScreen() {
   const formatDate = (d: Date) =>
   d.toISOString().split("T")[0];
 
+  const onSave = async () => {
+  const error = validate();
+  if (error) {
+    alert(error);
+    return;
+  }
+
+  const payload = ({
+                    name,
+                    dosage,
+                    start_date: formatDate(startDate),
+                    end_date: endDate ? formatDate(endDate) : null,
+                    schedule: {
+                        time,
+                        days_of_week:
+                        type === "everyday"
+                            ? [0,1,2,3,4,5,6]
+                            : weekdays,
+                    },
+                });
+
+    if (isEdit) {
+        await updateMedicine(medicineId, payload);
+    } else {
+        await createMedicine(payload);
+    }
+
+    navigation.goBack();
+    };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
         <View>
-            <Text style={styles.title}>Add Medicine</Text>
+            <Text style={styles.title}>
+                {isEdit ? "Edit Medicine" : "Add Medicine"}
+            </Text>
             <Text style={styles.label}>Medicine name</Text>
             <TextInput
             value={name}
@@ -160,29 +212,7 @@ export default function AddMedicineScreen() {
 
             <TouchableOpacity
                 style={styles.save}
-                onPress={async () => {
-                    const error = validate();
-                    if (error) {
-                    alert(error);
-                    return;
-                    }
-
-                    await createMedicine({
-                    name,
-                    dosage,
-                    start_date: formatDate(startDate),
-                    end_date: endDate ? formatDate(endDate) : null,
-                    schedule: {
-                        time,
-                        days_of_week:
-                        type === "everyday"
-                            ? [0,1,2,3,4,5,6]
-                            : weekdays,
-                    },
-                    });
-
-                    navigation.goBack();
-            }}
+                onPress={onSave}
                 >
             <Text style={{ color: "white", fontWeight: "600" }}>Save</Text>
             </TouchableOpacity>

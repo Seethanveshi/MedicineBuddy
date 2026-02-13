@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -109,19 +110,76 @@ func (h *MedicineHandler) Update(c *gin.Context) {
 		return
 	}
 
+	log.Println("Execute 1")
+
 	var req dto.CreateMedicineRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	log.Println("Execute 2")
+
 	patientID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+
+	for _, d := range req.Schedule.DaysOfWeek {
+		if d < 0 || d > 6 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "days_of_week must be between 0 (Sunday) and 6 (Saturday)",
+			})
+			return
+		}
+	}
+
+	log.Println("Execute 3")
+
+	startDate, err := time.Parse("2006-01-02", req.StartDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid start_date"})
+		return
+	}
+
+	log.Println("Execute 4")
+
+	var endDate *time.Time
+	if req.EndDate != "" {
+		parsedEnd, err := time.Parse("2006-01-02", req.EndDate)
+		if err != nil || parsedEnd.Before(startDate) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid end_date"})
+			return
+		}
+		endDate = &parsedEnd
+	}
+
+	log.Println("Execute 5")
+
+	timeOfDay, err := time.Parse("15:04", req.Schedule.Time)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid schedule time"})
+		return
+	}
+
+	log.Println("Execute 6")
+
+	updateReq := dto.UpdateReq{
+		Name:      req.Name,
+		Dosage:    req.Dosage,
+		StartDate: startDate,
+		EndDate:   endDate,
+		Schedule: struct {
+			Time       time.Time
+			DaysOfWeek []int
+		}{
+			Time:       timeOfDay,
+			DaysOfWeek: req.Schedule.DaysOfWeek,
+		},
+	}
 
 	err = h.medicineService.Update(
 		c.Request.Context(),
 		medicineID,
 		patientID,
-		req,
+		updateReq,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

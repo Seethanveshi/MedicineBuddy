@@ -14,6 +14,18 @@ export type CreateMedicineRequest = {
   };
 };
 
+export type MedicineResponse = {
+  id: string;
+  name: string;
+  dosage: string;
+  start_date: string;
+  end_date: string | null;
+  schedule: {
+    time: string;
+    days_of_week: number[];
+  };
+};
+
 export const API = axios.create({
     baseURL: "http://10.81.193.101:8080",
 });
@@ -82,4 +94,13 @@ export const updateMediTaker = async (
   } catch (error) {
     console.error(error)
   }
+};
+
+export const getMedicineById = async (id: string): Promise<MedicineResponse> => {
+  const res = await API.get<MedicineResponse>(`/medicines/${id}`);
+  return res.data;
+};
+
+export const updateMedicine = async (id: string, data: CreateMedicineRequest) => {
+  await API.put(`/medicines/${id}`, data);
 };

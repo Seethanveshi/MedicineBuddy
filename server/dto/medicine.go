@@ -1,6 +1,10 @@
 package dto
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Schedule  struct {
 	Time       string `json:"time" binding:"required"`
@@ -30,3 +34,14 @@ type MedicineDetailResponse struct {
 		DaysOfWeek []int  `json:"days_of_week"`
 	} `json:"schedule"`
 }
+
+type UpdateReq struct {
+		Name      string
+		Dosage    string 
+		StartDate time.Time 
+		EndDate   *time.Time 
+		Schedule  struct {
+			Time       time.Time 
+			DaysOfWeek []int  
+		}
+	}

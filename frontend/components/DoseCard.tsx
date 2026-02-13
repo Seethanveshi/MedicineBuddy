@@ -1,5 +1,6 @@
-import { View, Text, Button, StyleSheet } from "react-native";
+import { View, Text, Button, StyleSheet, TouchableOpacity } from "react-native";
 import { Dose } from "../types/dose";
+import { useNavigation } from "@react-navigation/native";
 
 type Props = {
   dose: Dose;
@@ -9,6 +10,7 @@ type Props = {
 
 export default function DoseCard({ dose, onTake, onSkip }: Props) {
   const style = STATUS_STYLES[dose.status];
+  const navigation = useNavigation<any>()
   return (
     <View style={[
         styles.card,
@@ -17,23 +19,27 @@ export default function DoseCard({ dose, onTake, onSkip }: Props) {
           backgroundColor: style.bg,
         },
       ]}>
-      <Text style={styles.name}>
-         {dose.name}
-      </Text>
-      <Text style={styles.dosage}>
-         {dose.dosage}
-      </Text>
+       <TouchableOpacity
+          onPress={() => navigation.navigate("AddMedicine", {id: dose.medicine_id})}
+        >
+        <Text style={styles.name}>
+          {dose.name}
+        </Text>
+        <Text style={styles.dosage}>
+          {dose.dosage}
+        </Text>
 
-      <Text style={{ color: style.text, marginTop: 4 }}>
-        {dose.status.toUpperCase()}
-      </Text>
+        <Text style={{ color: style.text, marginTop: 4 }}>
+          {dose.status.toUpperCase()}
+        </Text>
 
-      {dose.status === "pending" && (
-        <View style={styles.actions}>
-          <Button title="Take" onPress={onTake} />
-          <Button title="Skip" onPress={onSkip} />
-        </View>
-      )}
+        {dose.status === "pending" && (
+          <View style={styles.actions}>
+            <Button title="Take" onPress={onTake} />
+            <Button title="Skip" onPress={onSkip} />
+          </View>
+        )}
+      </TouchableOpacity>
     </View>
   );
 }

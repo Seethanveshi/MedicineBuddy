@@ -85,7 +85,7 @@ func (s *MedicineService) Update(
 	ctx context.Context,
 	medicineID uuid.UUID,
 	patientID uuid.UUID,
-	req dto.CreateMedicineRequest,
+	req dto.UpdateReq,
 ) error {
 
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -106,7 +106,8 @@ func (s *MedicineService) Update(
 		ctx,
 		tx,
 		medicineID,
-		req.Schedule,
+		req.Schedule.Time,
+		req.Schedule.DaysOfWeek,
 	)
 	if err != nil {
 		return err
