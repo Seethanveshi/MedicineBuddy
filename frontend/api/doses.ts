@@ -72,3 +72,10 @@ export const createMediTaker = async (data: {
 export const deleteMediTaker = async (id: string) => {
   await API.delete(`/meditakers/${id}`);
 };
+
+export const updateMediTaker = async (
+  id: string,
+  data: { name: string; email: string; relationship?: string }
+) => {
+  await API.put(`/meditakers/${id}`, data);
+};

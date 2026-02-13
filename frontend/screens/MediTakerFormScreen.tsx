@@ -1,21 +1,34 @@
 import { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { createMediTaker } from "@/api/doses";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { createMediTaker, updateMediTaker } from "@/api/doses";
 import { StyleSheet } from "react-native";
 
 
 export default function AddMediTakerScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const params = (route.params || {}) as Params;
+  const [name, setName] = useState(params.name || "");
+  const [email, setEmail] = useState(params.email || "");
+  const [relationship, setRelationship] = useState(
+    params.relationship || ""
+  );
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [relationship, setRelationship] = useState("");
+  const isEdit = !!params.id;
+
+  type Params = {
+    id?: string;
+    name?: string;
+    email?: string;
+    relationship?: string;
+  };
+
 
   return (
     <View style={{ padding: 16 }}>
       <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 20 }}>
-        Add MediTaker
+        {isEdit ? "Edit MediTaker" : "Add MediTaker"}
       </Text>
 
       <Text>Name</Text>
@@ -46,15 +59,27 @@ export default function AddMediTakerScreen() {
         <TouchableOpacity
             style={styles.save}
             onPress={async () => {
-                if (!name || !email) {
-                alert("Name & email required");
-                return;
-                }
+            if (!name || !email) {
+              alert("Name & email required");
+              return;
+            }
 
-                await createMediTaker({ name, email, relationship });
+            if (isEdit) {
+              await updateMediTaker(params.id!, {
+                name,
+                email,
+                relationship,
+              });
+            } else {
+              await createMediTaker({
+                name,
+                email,
+                relationship,
+              });
+            }
 
-                navigation.goBack();
-            }}
+            navigation.goBack();
+          }}
             >
             <Text style={{ color: "white" }}>Save</Text>
         </TouchableOpacity>

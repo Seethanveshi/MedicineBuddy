@@ -76,6 +76,18 @@ export default function MediTakersScreen() {
           <Text style={{ fontWeight: "700" }}>{m.name}</Text>
           <Text>{m.relationship}</Text>
           <Text style={{ color: "#666" }}>{m.email}</Text>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("MediTakerForm", {
+                id: m.id,
+                name: m.name,
+                email: m.email,
+                relationship: m.relationship,
+              })
+            }
+          >
+            <Text style={{ fontWeight: "700" }}>Edit</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => onDelete(m.id, m.name)}
@@ -87,7 +99,7 @@ export default function MediTakersScreen() {
       ))}
 
       <TouchableOpacity
-          onPress={() => navigation.navigate("AddMediTaker")}
+          onPress={() => navigation.navigate("MediTakerForm")}
           style={{
             position: "absolute",
             bottom: 20,
