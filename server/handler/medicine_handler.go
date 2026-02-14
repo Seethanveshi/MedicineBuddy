@@ -186,5 +186,30 @@ func (h *MedicineHandler) Update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"message": "medicine updated"})
+	c.JSON(http.StatusOK, gin.H{"message": "medicine updated"})
+}
+
+func (h *MedicineHandler) Delete(c *gin.Context) {
+
+	idParam := c.Param("id")
+
+	medicineID, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+
+	patientID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+
+	err = h.medicineService.Delete(
+		c.Request.Context(),
+		medicineID,
+		patientID,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "medicine deleted"})
 }

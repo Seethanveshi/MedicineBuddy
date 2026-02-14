@@ -86,7 +86,7 @@ func (r *MedicineRepository) GetByID(
 		s.days_of_week
 	FROM medicines m
 	JOIN schedules s ON s.medicine_id = m.id
-	WHERE m.id = $1
+	WHERE m.id = $1 AND m.is_active = true
 	AND m.user_id = $2
 	`
 
@@ -253,7 +253,7 @@ func (r *MedicineRepository) GetModelByIDTx(
 	query := `
 		SELECT id, user_id, name, dosage, start_date, end_date
 		FROM medicines
-		WHERE id = $1
+		WHERE id = $1 AND is_active = true
 	`
 
 	var m model.Medicine
@@ -273,4 +273,49 @@ func (r *MedicineRepository) GetModelByIDTx(
 	}
 
 	return &m, nil
+}
+
+func (r *MedicineRepository) DeleteTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	medicineID uuid.UUID,
+	patientID uuid.UUID,
+) error {
+
+	query := `
+		UPDATE medicines
+		SET is_active = false
+		WHERE id = $1
+		AND user_id = $2
+	`
+
+	result, err := tx.ExecContext(ctx, query, medicineID, patientID)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return fmt.Errorf("medicine not found")
+	}
+
+	return nil
+}
+
+func (r *MedicineRepository) DeleteByMedicineTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	medicineID uuid.UUID,
+) error {
+
+	query := `
+		DELETE FROM schedules
+		WHERE medicine_id = $1
+	`
+	_, err := tx.ExecContext(ctx, query, medicineID)
+	return err
 }

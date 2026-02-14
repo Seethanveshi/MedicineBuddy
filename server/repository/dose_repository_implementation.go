@@ -282,3 +282,21 @@ func (r *DoseRepositoryImple) WeeklyDetailed(
 
 	return patientName, list, nil
 }
+
+func (r *DoseRepositoryImple) DeleteFutureByMedicineTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	medicineID uuid.UUID,
+	from time.Time,
+) error {
+
+	query := `
+		DELETE FROM dose_logs
+		WHERE medicine_id = $1
+		AND scheduled_at > $2
+		AND status = 'pending'
+	`
+
+	_, err := tx.ExecContext(ctx, query, medicineID, from)
+	return err
+}

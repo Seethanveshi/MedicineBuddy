@@ -16,13 +16,13 @@ type MedicineService struct {
 	db                 *sql.DB
 	medicineRepository *repository.MedicineRepository
 	doseService        *DoseService
-	doseRepository     *repository.DoseRepository
+	doseRepository     repository.DoseRepository
 }
 
 func NewMedicineService(db *sql.DB,
 	medRepo *repository.MedicineRepository,
 	doseSvc *DoseService,
-	doseRepository *repository.DoseRepository,
+	doseRepository repository.DoseRepository,
 
 ) *MedicineService {
 	return &MedicineService{
@@ -141,6 +141,54 @@ func (s *MedicineService) Update(
 		medicine,
 		schedule,
 		7,
+	)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (s *MedicineService) Delete(
+	ctx context.Context,
+	medicineID uuid.UUID,
+	patientID uuid.UUID,
+) error {
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	// 1️⃣ delete future pending doses
+	err = s.doseRepository.DeleteFutureByMedicineTx(
+		ctx,
+		tx,
+		medicineID,
+		time.Now(),
+	)
+	if err != nil {
+		return err
+	}
+
+	// 2️⃣ delete schedule
+	err = s.medicineRepository.DeleteByMedicineTx(
+		ctx,
+		tx,
+		medicineID,
+	)
+	if err != nil {
+		return err
+	}
+
+	// 3️⃣ delete medicine
+	err = s.medicineRepository.DeleteTx(
+		ctx,
+		tx,
+		medicineID,
+		patientID,
 	)
 	if err != nil {
 		return err

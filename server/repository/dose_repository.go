@@ -19,4 +19,5 @@ type DoseRepository interface {
 	GetDoseHistory(ctx context.Context, limit int) ([]dto.DoseLogResponse, error)
 	GetDosesByDate(ctx context.Context, date time.Time) ([]dto.DoseLogResponse, error)
 	WeeklyDetailed(ctx context.Context, patientID uuid.UUID, start time.Time, end time.Time) (string, []dto.DoseDetail, error)
+	DeleteFutureByMedicineTx(ctx context.Context, tx *sql.Tx, medicineID uuid.UUID, from time.Time) error
 }

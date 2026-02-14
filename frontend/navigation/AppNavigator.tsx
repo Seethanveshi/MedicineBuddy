@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import TodayScreen from "../screens/TodayScreen";
 import HistoryScreen from "../screens/HistoryScreen";
-import AddMedicineScreen from "../screens/AddMedicineScreen";
+import AddMedicineScreen from "../screens/MedicineScreen";
 import MediTakersScreen from "@/screens/MediTakerScreen";
 import AddMediTakerScreen from "@/screens/MediTakerFormScreen";
 
@@ -39,7 +39,7 @@ export default function AppNavigator() {
       <Stack.Screen
         name="AddMedicine"
         component={AddMedicineScreen}
-        options={{ title: "Add Medicine" }}
+        options={{ title: "Medicine" }}
       />
       <Stack.Screen
         name="MediTakers"
@@ -49,7 +49,7 @@ export default function AppNavigator() {
       <Stack.Screen
         name="MediTakerForm"
         component={AddMediTakerScreen}
-        options={{ title: "Add MediTaker" }}
+        options={{ title: "MediTaker" }}
       />
 
     </Stack.Navigator>
